@@ -28,7 +28,7 @@ def _seed_default_user():
     db = SessionLocal()
     try:
         if not db.query(User).filter(User.id == 1).first():
-            db.add(User(name="Demo User", email="demo@pathfinder.ai"))
+            db.add(User(id=1, name="Demo User", email="demo@pathfinder.ai"))
             db.commit()
     finally:
         db.close()

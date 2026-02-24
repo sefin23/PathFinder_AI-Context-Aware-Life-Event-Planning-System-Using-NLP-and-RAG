@@ -74,10 +74,12 @@
 
       <div id="events-list">
         <!-- Populated by JS -->
-        <div class="empty-state" id="events-empty">
-          <div class="empty-icon">📋</div>
-          <p>No life events yet.<br />Create your first one above.</p>
-        </div>
+      </div>
+
+      <!-- Empty state moved outside to prevent destruction by innerHTML = "" -->
+      <div class="empty-state" id="events-empty">
+        <div class="empty-icon">📋</div>
+        <p>No life events yet.<br />Create your first one above.</p>
       </div>
     </div>
 

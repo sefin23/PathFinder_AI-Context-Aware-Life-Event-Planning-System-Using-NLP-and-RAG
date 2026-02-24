@@ -247,7 +247,7 @@ a:hover {
   transition: border-color 0.15s;
 }
 .task-item:hover {
-  border-color: var(--border);
+  border-color: var(--accent);
 }
 .task-item.task-item--subtask {
   margin-left: 36px;
