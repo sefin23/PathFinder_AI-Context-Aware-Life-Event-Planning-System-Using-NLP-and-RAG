@@ -158,3 +158,13 @@ test.db
 
 # Sandbox folder
 test_backend/
+
+# Temporary / Scratch files
+tmp/
+temp_val.json
+tmp_test_*.py
+test_models_live.py
+gemini_models_results.txt
+test.jsx
+full_sweep.py
+replace_workflow_card_calendar.ps1

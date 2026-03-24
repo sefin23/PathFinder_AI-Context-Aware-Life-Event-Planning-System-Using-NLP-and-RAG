@@ -40,12 +40,26 @@ function SubtaskRow({ subtask, onToggleDone, onEdit, onEditPriority, onEditDays,
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
-        padding: '8px 0',
+        gap: 12,
+        padding: '10px 0 10px 14px',
         borderBottom: '1px solid rgba(255,255,255,0.05)',
         opacity: subtask.done ? 0.6 : 1,
+        position: 'relative',
       }}
     >
+      {/* Subtask Journey Marker */}
+      <div 
+        style={{
+          position: 'absolute',
+          left: -1,
+          top: 10,
+          bottom: 10,
+          width: 3,
+          background: subtask.done ? 'rgba(255,255,255,0.1)' : (subtask.priority <= 2 ? 'var(--amber)' : 'var(--sage)'),
+          borderRadius: 4,
+          transition: 'all 0.3s ease'
+        }}
+      />
       {/* Checkbox */}
       <button
         onClick={() => onToggleDone?.(subtask.id)}
@@ -79,8 +93,8 @@ function SubtaskRow({ subtask, onToggleDone, onEdit, onEditPriority, onEditDays,
           onKeyDown={(e) => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') setEditing(false) }}
           style={{
             flex: 1,
-            background: 'var(--forest-card2)',
-            border: '1px solid var(--sage)',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.15)',
             borderRadius: 'var(--r-sm)',
             padding: '4px 8px',
             color: 'white',
@@ -96,7 +110,7 @@ function SubtaskRow({ subtask, onToggleDone, onEdit, onEditPriority, onEditDays,
           style={{
             flex: 1,
             fontSize: 13,
-            color: subtask.done ? 'var(--muted)' : 'var(--fog)',
+            color: subtask.done ? 'var(--muted)' : 'rgba(255,255,255,0.8)',
             textDecoration: subtask.done ? 'line-through' : 'none',
             cursor: 'text',
           }}
@@ -116,9 +130,9 @@ function SubtaskRow({ subtask, onToggleDone, onEdit, onEditPriority, onEditDays,
         style={{ 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           minWidth: 26, height: 22, borderRadius: 'var(--r-sm)',
-          background: subtask.priority <= 2 ? 'rgba(212,124,63,0.1)' : 'rgba(255,255,255,0.05)',
-          border: `1px solid ${subtask.priority <= 2 ? 'rgba(212,124,63,0.3)' : 'rgba(255,255,255,0.1)'}`,
-          color: subtask.priority <= 2 ? 'var(--amber)' : 'var(--muted)',
+          background: subtask.priority <= 2 ? 'rgba(212,124,63,0.1)' : 'rgba(0,0,0,0.03)',
+          border: `1px solid ${subtask.priority <= 2 ? 'rgba(212,124,63,0.3)' : 'rgba(0,0,0,0.06)'}`,
+          color: subtask.priority <= 2 ? 'var(--amber)' : '#999',
           fontSize: 10, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
         }}
       >
@@ -129,10 +143,10 @@ function SubtaskRow({ subtask, onToggleDone, onEdit, onEditPriority, onEditDays,
       {subtask.suggested_due_offset_days != null && (
         <div style={{ 
           display: 'flex', alignItems: 'center', gap: 4,
-          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 'var(--r-sm)',
+          background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 'var(--r-sm)',
           padding: '2px 6px'
         }}>
-          <span className="font-mono" style={{ fontSize: 9, color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase' }}>Day</span>
+          <span className="font-mono" style={{ fontSize: 9, color: '#999', fontWeight: 700, textTransform: 'uppercase' }}>Day</span>
           <input 
             aria-label="Subtask due offset days"
             type="number" min="0"
@@ -140,12 +154,13 @@ function SubtaskRow({ subtask, onToggleDone, onEdit, onEditPriority, onEditDays,
             onChange={e => onEditDays?.(subtask.id, parseInt(e.target.value) || 0)}
             className="font-mono"
             style={{
-              width: 28, background: 'transparent', border: 'none',
-              borderBottom: '1px solid rgba(255,255,255,0.2)', color: 'var(--fog)', fontSize: 11,
-              fontWeight: 600, textAlign: 'center', outline: 'none', padding: '0 2px'
+              width: 38, background: 'transparent', border: 'none',
+              borderBottom: '1px solid rgba(255,255,255,0.2)', color: 'white', fontSize: 11,
+              fontWeight: 600, textAlign: 'center', outline: 'none', padding: '0 2px',
+              WebkitAppearance: 'none', MozAppearance: 'textfield'
             }}
              onFocus={e => e.target.style.borderBottomColor = 'var(--sage)'}
-             onBlur={e => e.target.style.borderBottomColor = 'rgba(255,255,255,0.2)'}
+             onBlur={e => e.target.style.borderBottomColor = '#ddd'}
           />
         </div>
       )}
@@ -222,11 +237,11 @@ export default function SubtaskList({
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submitNew(); if (e.key === 'Escape') setAdding(false) }}
-            placeholder="New node..."
+            placeholder="New step..."
             style={{
               flex: 1,
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: 'var(--r-sm)',
               padding: '6px 12px',
               color: 'white',
@@ -235,7 +250,7 @@ export default function SubtaskList({
               outline: 'none',
             }}
              onFocus={e => e.target.style.borderColor = 'var(--sage)'}
-             onBlur={e => { if(!newTitle) setAdding(false); e.target.style.borderColor = 'rgba(255,255,255,0.1)'}}
+             onBlur={e => { if(!newTitle) setAdding(false); e.target.style.borderColor = 'rgba(255,255,255,0.15)'}}
           />
           <button
             onClick={submitNew}
@@ -269,9 +284,10 @@ export default function SubtaskList({
           onMouseEnter={e => { e.currentTarget.style.color = 'var(--fog)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}}
           onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent'}}
         >
-          <Plus size={14} /> APPEND NODE
+          <Plus size={14} /> ADD STEP
         </button>
       )}
     </div>
   )
 }
+

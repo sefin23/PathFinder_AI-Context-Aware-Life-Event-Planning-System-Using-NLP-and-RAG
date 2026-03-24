@@ -37,11 +37,11 @@ export default function ChatBubble({ type = 'ai', text = '', done = false }) {
         ) : (
           <Loader2
             size={14}
-            color="var(--lavender)"
+            color="var(--emerald)"
             style={{ animation: 'spin 1.5s linear infinite' }}
           />
         )}
-        <span className="font-mono" style={{ fontSize: 11, color: done ? 'var(--sage)' : 'var(--lavender)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{text}</span>
+        <span className="font-mono" style={{ fontSize: 11, color: done ? 'var(--sage)' : 'var(--emerald)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{text}</span>
         <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
       </motion.div>
     )
@@ -72,7 +72,7 @@ export default function ChatBubble({ type = 'ai', text = '', done = false }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: isUser ? 'rgba(255,255,255,0.03)' : 'var(--lavender)',
+          background: isUser ? 'rgba(255,255,255,0.03)' : 'var(--emerald)',
           border: isUser ? '1px solid rgba(255,255,255,0.08)' : 'none',
           marginTop: 4,
         }}
@@ -98,3 +98,4 @@ export default function ChatBubble({ type = 'ai', text = '', done = false }) {
     </motion.div>
   )
 }
+

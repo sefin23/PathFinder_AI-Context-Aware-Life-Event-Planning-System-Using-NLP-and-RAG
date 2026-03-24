@@ -4,6 +4,7 @@
  */
 import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import BrandLogo from './BrandLogo'
 import LifeEventInput from './LifeEventInput'
 import ChatBubble from './ChatBubble'
 import { Sparkles } from 'lucide-react'
@@ -64,24 +65,26 @@ export default function AIInteractionPanel({
           >
             <div
               style={{
-                width: 64,
-                height: 64,
-                borderRadius: 'var(--r-md)',
+                width: 80,
+                height: 80,
+                borderRadius: 'var(--r-lg)',
                 background: 'rgba(255,255,255,0.02)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
                 border: '1px solid rgba(255,255,255,0.05)',
+                marginBottom: 12
               }}
             >
-              <Sparkles size={28} color="var(--sage)" />
+              <BrandLogo size={48} />
             </div>
             <div>
               <p className="font-playfair" style={{ fontSize: 24, fontWeight: 700, color: 'white', marginBottom: 8 }}>
-                Initiate Pathfinding Sequence
+                Start your journey
               </p>
-              <p style={{ fontSize: 14, color: 'var(--fog)', maxWidth: 420, lineHeight: 1.6, margin: '0 auto' }}>
-                Describe a complex scenario or impending transition. The intelligence core will synthesize optimal navigation pathways and extract critical milestones.
+              <p style={{ fontSize: 14, color: 'var(--fog)', maxWidth: '65ch', lineHeight: 1.6, margin: '0 auto' }}>
+                Describe what's happening. The assistant will create a plan for you and find the important steps you need to take.
               </p>
             </div>
           </motion.div>
@@ -128,3 +131,4 @@ export default function AIInteractionPanel({
     </div>
   )
 }
+

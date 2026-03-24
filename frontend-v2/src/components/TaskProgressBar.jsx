@@ -13,7 +13,7 @@ export default function TaskProgressBar({ completed = 0, total = 0 }) {
     <div style={{ marginTop: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
         <span className="font-mono" style={{ fontSize: 9, color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          {completed} / {total} nodes computed
+          {completed} / {total} steps ready
         </span>
         <span className="font-mono" style={{ fontSize: 9, fontWeight: 700, color: pct === 100 ? 'var(--sage)' : 'var(--muted)' }}>{pct}%</span>
       </div>
@@ -25,10 +25,11 @@ export default function TaskProgressBar({ completed = 0, total = 0 }) {
           style={{
             height: '100%',
             borderRadius: 'var(--r-sm)',
-            background: pct === 100 ? 'var(--sage)' : 'var(--lavender)',
+            background: pct === 100 ? 'var(--sage)' : 'var(--emerald)',
           }}
         />
       </div>
     </div>
   )
 }
+

@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _EMBEDDING_MODEL = "gemini-embedding-001"     # 3072-dim, multilingual
-_EXPLANATION_MODEL = "gemini-2.5-flash-lite"  # separate quota from 2.0-flash
+_EXPLANATION_MODEL = "gemini-2.0-flash-lite" 
 _DEFAULT_TOP_K = 3
 
 _GROUNDED_SYSTEM_PROMPT = """\
@@ -178,16 +178,23 @@ def retrieve(
     q = db.query(KnowledgeBaseEntry).filter(
         KnowledgeBaseEntry.embedding.isnot(None)  # skip unembedded rows
     )
-    if life_event_type is not None:
+    # Don't filter by OTHER — it has no KB entries; search all categories instead
+    from backend.schemas.nlp_schema import LifeEventType as _LET
+    if life_event_type is not None and life_event_type != _LET.OTHER:
         q = q.filter(KnowledgeBaseEntry.life_event_type == life_event_type)
 
     candidates = q.all()
 
     if not candidates:
+        # Fallback: drop the type filter and search entire KB
+        candidates = db.query(KnowledgeBaseEntry).filter(
+            KnowledgeBaseEntry.embedding.isnot(None)
+        ).all()
+
+    if not candidates:
         raise ValueError(
-            "No embedded knowledge-base entries found"
-            + (f" for life_event_type={life_event_type.value}" if life_event_type else "")
-            + ". Run the seed script first: python -m backend.scripts.seed_knowledge_base"
+            "Knowledge base is empty. "
+            "Run: python -m backend.scripts.seed_knowledge_base"
         )
 
     # 3. Score every candidate
@@ -198,7 +205,7 @@ def retrieve(
         except (json.JSONDecodeError, TypeError):
             logger.warning("Skipping entry id=%s — invalid embedding JSON.", entry.id)
             continue
-        score = _cosine_similarity(query_vector, doc_vector)
+        score = max(0.0, _cosine_similarity(query_vector, doc_vector))
         scored.append((score, entry))
 
     # 4. Sort descending, take top_k
@@ -224,24 +231,27 @@ def retrieve(
 def explain_with_llm(
     query: str,
     chunks: list[RetrievedChunk],
+    life_event_type: Optional[LifeEventType] = None,
 ) -> RAGExplanation:
     """
-    Use Gemini (2.5 Flash Lite) to explain retrieved chunks.
-
-    The model is given ONLY the retrieved content via a strict system prompt
-    — it may not use outside knowledge.
-
-    Args:
-        query:  The original user query.
-        chunks: Retrieved knowledge-base chunks.
-
-    Returns:
-        :class:`RAGExplanation` with explanation text and source IDs.
-
-    Raises:
-        RuntimeError: If the Gemini API call fails.
+    Use Gemini (2.0 Flash Lite) to explain retrieved chunks.
+    
+    Integrated with a 'Safety Net' fallback to professional expert knowledge
+    if the LLM fails or the KB is empty.
     """
     if not chunks:
+        # ── SAFETY NET FALLBACK ──────────────────────────────────────────
+        # Try to get high-quality static knowledge if RAG retrieval found nothing
+        if life_event_type:
+            from backend.services.static_knowledge import get_expert_fallback
+            guide = get_expert_fallback(life_event_type)
+            if guide:
+                logger.info("RAG empty: Using high-quality STATIC EXPERT KNOWLEDGE safety net.")
+                return RAGExplanation(
+                    explanation=guide,
+                    source_ids=[-1],
+                )
+
         return RAGExplanation(
             explanation="No relevant requirements were found for your query.",
             source_ids=[],
@@ -264,6 +274,23 @@ def explain_with_llm(
         f"drawing only from the entries above."
     )
 
+    # ── PRIMARY: OpenRouter (tries free models + Gemini fallback internally) ──
+    try:
+        from backend.services.openrouter_client import generate_completion
+        text = generate_completion(
+            system_instruction=_GROUNDED_SYSTEM_PROMPT,
+            user_message=user_message,
+            max_tokens=1024,
+            temperature=0.1,
+        )
+        return RAGExplanation(
+            explanation=text.strip(),
+            source_ids=[chunk.id for chunk in chunks],
+        )
+    except Exception as exc:
+        logger.warning("OpenRouter explanation failed, trying direct Gemini: %s", str(exc)[:120])
+
+    # ── SECONDARY: Direct Gemini (different quota bucket) ─────────────────
     client = _get_gemini_client()
     try:
         response = client.models.generate_content(
@@ -276,20 +303,25 @@ def explain_with_llm(
             ),
         )
         text = response.text.strip()
+        return RAGExplanation(
+            explanation=text,
+            source_ids=[chunk.id for chunk in chunks],
+        )
     except Exception as exc:
-        err_str = str(exc)
-        if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-            logger.warning("Gemini rate limited on explanation: %s", err_str[:200])
-            raise RuntimeError(
-                "Gemini rate limit hit. Try again in ~60s."
-            ) from exc
-        logger.exception("Gemini explanation call failed.")
-        raise RuntimeError(f"LLM explanation failed: {exc}") from exc
+        logger.warning("Direct Gemini explanation also failed: %s", str(exc)[:120])
 
-    return RAGExplanation(
-        explanation=text,
-        source_ids=[chunk.id for chunk in chunks],
-    )
+    # ── TERTIARY: Static expert knowledge safety net ───────────────────────
+    if life_event_type:
+        from backend.services.static_knowledge import get_expert_fallback
+        guide = get_expert_fallback(life_event_type)
+        if guide:
+            logger.info("All LLMs failed. Using static expert knowledge safety net.")
+            return RAGExplanation(
+                explanation=guide,
+                source_ids=[-1],
+            )
+
+    raise RuntimeError("All LLM explanation services unavailable.")
 
 
 # ---------------------------------------------------------------------------
@@ -329,7 +361,7 @@ def rag_query(
     explanation_error: Optional[str] = None
 
     try:
-        explanation = explain_with_llm(query, chunks)
+        explanation = explain_with_llm(query, chunks, life_event_type)
     except RuntimeError as exc:
         explanation_available = False
         explanation_error = (

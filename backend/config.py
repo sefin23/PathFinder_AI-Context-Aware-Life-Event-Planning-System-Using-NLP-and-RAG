@@ -71,7 +71,12 @@ class Settings:
 
     # NLP / AI
     gemini_api_key: str = field(default_factory=lambda: _env("GEMINI_API_KEY"))
+    gemini_api_key_secondary: str = field(default_factory=lambda: _env("GEMINI_API_KEY_SECONDARY"))
     openrouter_api_key: str = field(default_factory=lambda: _env("OPENROUTER_API_KEY"))
+    openrouter_api_key_secondary: str = field(default_factory=lambda: _env("OPENROUTER_API_KEY_SECONDARY"))
+    # Default to Qwen3 80B MoE — high quality + low traffic = best reliability.
+    # The tiered fallback in openrouter_client.py handles the rest.
+    openrouter_model: str = field(default_factory=lambda: _env("OPENROUTER_MODEL", "qwen/qwen3-next-80b-a3b-instruct:free"))
 
     # Runtime environment
     app_env: str = field(default_factory=lambda: _env("APP_ENV", "development"))

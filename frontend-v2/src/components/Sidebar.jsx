@@ -1,210 +1,261 @@
 /**
- * Sidebar — left navigation panel.
- * Shows logo, nav links, and recent workflow stubs.
- * Active link is determined by the `activePage` prop.
- * Dark Forest styling.
+ * Sidebar — premium left navigation panel.
+ * Collapsed: 60px (icons) | Expanded: 240px (hover).
+ * Amber accents, 250ms smooth transition, custom non-AI icons.
  */
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import BrandLogo from './BrandLogo'
+import AllBookmarkIcon from './AllBookmarkIcon'
+import InsightsIcon from './InsightsIcon'
 import {
-  Sparkles,
-  LayoutDashboard,
-  Calendar,
-  BookOpen,
-  Settings,
-  Compass,
+  Map,
+  Sliders,
+  User,
   ChevronRight,
+  LogOut,
+  Archive,
+  Calendar,
+  Compass,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'New Journey',   icon: Compass },
-  { id: 'saved',     label: 'Saved Plans',   icon: BookOpen },
-  { id: 'insights',  label: 'Insights',      icon: LayoutDashboard },
-  { id: 'settings',  label: 'Settings',      icon: Settings },
+  { id: 'dashboard', label: 'New Event', icon: Map,             color: '#60a5fa' }, // Vibrant Sky Blue
+  { id: 'saved',     label: 'Event History', icon: AllBookmarkIcon, color: '#34d399' }, // Vibrant Emerald
+  { id: 'journeys',  label: 'My Calendar', icon: Calendar,         color: '#fbbf24' }, // Vibrant Amber
+  { id: 'vault',     label: 'Document Vault', icon: Archive,      color: '#22d3ee' }, // Vibrant Cyan
+  { id: 'insights',  label: 'Insights',    icon: InsightsIcon,    color: '#fb7185' }, // Vibrant Rose/Coral
 ]
 
-const RECENT_WORKFLOWS = [
-  { id: 1, label: 'Move to London' },
-  { id: 2, label: 'Buying a used car' },
-  { id: 3, label: 'Marriage registration' },
+const BOTTOM_ITEMS = [
+  { id: 'settings', label: 'Settings', icon: '⚙️', color: '#f2c94c' }, // Gold
 ]
 
 export default function Sidebar({ activePage = 'dashboard', onNavigate }) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  const sidebarWidth = isHovered ? 240 : 60
+
   return (
-    <aside
+    <motion.aside
       className="sb-wrap"
+      initial={false}
+      animate={{ width: sidebarWidth }}
+      transition={{ type: 'tween', ease: [0.16, 1, 0.3, 1], duration: 0.3 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
-        width: 250,
-        minWidth: 250,
-        background: 'rgba(13,26,21,0.5)',
-        backdropFilter: 'blur(20px)',
-        borderRight: '1px solid rgba(255,255,255,0.05)',
+        height: '100%',
+        background: 'rgba(13, 26, 21, 0.45)',
+        backdropFilter: 'blur(24px)',
+        borderRight: '2px solid rgba(212, 124, 63, 0.5)',
+        borderTop: '2px solid rgba(212, 124, 63, 0.3)',
+        borderBottom: '2px solid rgba(212, 124, 63, 0.3)',
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
+        zIndex: 50,
+        position: 'relative',
+        boxShadow: `
+          15px 0 60px rgba(0,0,0,0.7), 
+          inset -3px 0 15px rgba(212, 124, 63, 0.2),
+          inset 0 0 30px rgba(0,0,0,0.4),
+          0 0 30px rgba(212, 124, 63, 0.15)
+        `,
+        borderTopRightRadius: 24,
+        borderBottomRightRadius: 24,
+        margin: 0,
         overflow: 'hidden',
-        zIndex: 10,
+        willChange: 'width'
       }}
     >
-      {/* Logo */}
-      <div style={{ padding: '32px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 'var(--r-sm)',
-            background: 'rgba(212,124,63,0.15)',
-            border: '1px solid rgba(212,124,63,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 15px rgba(212,124,63,0.2)'
-          }}
-        >
-          <Sparkles size={16} color="var(--amber)" />
+      {/* Logo Section */}
+      <div style={{ 
+        padding: '30px 0', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: isHovered ? 'flex-start' : 'center',
+        paddingLeft: isHovered ? 20 : 0,
+        gap: 12 
+      }}>
+        <div style={{ position: 'relative' }}>
+            <BrandLogo size={28} />
         </div>
-        <div style={{ flex: 1 }}>
-          <div className="font-playfair" style={{ fontWeight: 800, fontSize: 18, color: 'white', letterSpacing: '0.02em', lineHeight: 1 }}>
-            PathFinder <span style={{ color: 'var(--sage)', fontSize: 14 }}>AI</span>
-          </div>
-        </div>
+        <AnimatePresence>
+          {isHovered && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+              className="font-playfair"
+              style={{ fontWeight: 900, fontSize: 20, color: 'white', letterSpacing: '-0.02em' }}
+            >
+              PathFinder
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Navigation */}
-      <nav style={{ padding: '0 12px', flex: 1, overflowY: 'auto' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon
-          const isActive = activePage === item.id
-          return (
-            <button
-              key={item.id}
-              onClick={() => onNavigate?.(item.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 'var(--r-sm)',
-                border: 'none',
-                cursor: 'pointer',
-                background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
-                color: isActive ? 'white' : 'var(--muted)',
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 13,
-                fontWeight: isActive ? 600 : 500,
-                transition: 'all 0.3s',
-                textAlign: 'left',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-                  e.currentTarget.style.color = 'var(--fog)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'var(--muted)'
-                }
-              }}
-            >
-              {isActive && (
-                 <motion.div
-                   layoutId="active-indicator"
-                   style={{
-                     position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3,
-                     background: 'var(--amber)', borderRadius: '0 4px 4px 0'
-                   }}
-                 />
-              )}
-              <Icon size={16} color={isActive ? "var(--amber)" : "currentcolor"} />
-              <span style={{ flex: 1 }}>{item.label}</span>
-              {isActive && <ChevronRight size={14} style={{ opacity: 0.8, color: "var(--lavender)" }} />}
-            </button>
-          )
-        })}
+      {/* Navigation Main */}
+      <nav style={{ flex: 1, padding: '0 8px', marginTop: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon
+            const isActive = activePage === item.id
+            return (
+              <button
+                key={item.id}
+                onClick={() => onNavigate?.(item.id)}
+                className="btn-cust"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: isHovered ? 'flex-start' : 'center',
+                  gap: 16,
+                  width: '100%',
+                  height: 44,
+                  padding: isHovered ? '0 12px' : 0,
+                  borderRadius: 12,
+                  border: 'none',
+                  background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
+                  color: isActive ? 'white' : 'rgba(255,255,255,0.85)', // Increased from 0.6
+                  transition: 'all 0.2s',
+                  position: 'relative',
+                }}
+              >
+                {/* Active Indicator Pillar */}
+                {isActive && (
+                   <motion.div
+                     layoutId="active-pillar"
+                     style={{
+                       position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3,
+                       background: 'var(--amber)', borderRadius: '0 4px 4px 0'
+                     }}
+                   />
+                )}
+                
+                <Icon 
+                  size={18} 
+                  style={{ 
+                    flexShrink: 0, 
+                    color: item.color,
+                    opacity: 1, 
+                    filter: 'none',
+                    transition: 'all 0.3s'
+                  }} 
+                />
+                
+                {isHovered && (
+                   <motion.span
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     style={{ 
+                        fontSize: 13, fontWeight: isActive ? 600 : 500,
+                        whiteSpace: 'nowrap'
+                     }}
+                   >
+                     {item.label}
+                   </motion.span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
-        {/* Divider */}
-        <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)', margin: '24px 16px' }} />
+        {/* Separator Line */}
+        <div style={{ 
+          margin: '24px 12px', height: 1, 
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)' 
+        }} />
 
-        {/* Recent Workflows */}
-        <div style={{ padding: '0 8px' }}>
-          <p
-            className="font-mono"
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: 'var(--muted)',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
-              marginBottom: 16,
-              paddingLeft: 8
-            }}
-          >
-            Terminal History
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {RECENT_WORKFLOWS.map((wf, i) => (
-            <motion.button
-              key={wf.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.08 }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                width: '100%',
-                padding: '8px 10px',
-                borderRadius: 'var(--r-sm)',
-                border: 'none',
-                cursor: 'pointer',
-                background: 'transparent',
-                color: 'var(--fog)',
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 12.5,
-                textAlign: 'left',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-                e.currentTarget.style.color = 'white'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = 'var(--fog)'
-              }}
-            >
-              <div
+        {/* Secondary Nav */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {BOTTOM_ITEMS.map((item) => {
+            const Icon = item.icon
+            const isActive = activePage === item.id
+            return (
+              <button
+                key={item.id}
+                onClick={() => onNavigate?.(item.id)}
                 style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.1)',
-                  flexShrink: 0,
-                  transition: 'background 0.2s'
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: isHovered ? 'flex-start' : 'center',
+                  gap: 16,
+                  width: '100%',
+                  height: 44,
+                  padding: isHovered ? '0 12px' : 0,
+                  borderRadius: 12,
+                  border: 'none',
+                  background: 'transparent',
+                  color: isActive ? 'white' : 'rgba(255,255,255,0.85)', // Increased from 0.6
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
                 }}
-              />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {wf.label}
-              </span>
-            </motion.button>
-          ))}
-          </div>
+              >
+                {typeof Icon === 'string' ? (
+                  <span style={{ fontSize: 18, flexShrink: 0, opacity: isActive ? 1 : 0.85 }}>{Icon}</span>
+                ) : (
+                  <Icon 
+                    size={18} 
+                    style={{ 
+                      flexShrink: 0, 
+                      color: item.color,
+                      opacity: 1,
+                      filter: 'none',
+                      transition: 'all 0.3s'
+                    }} 
+                  />
+                )}
+                {isHovered && (
+                   <motion.span
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap' }}
+                   >
+                     {item.label}
+                   </motion.span>
+                )}
+              </button>
+            )
+          })}
         </div>
       </nav>
 
-      {/* Footer */}
-      <div style={{ padding: '24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-         <div className="font-mono" style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-           PFDR-OS v2.0 · INTL
-         </div>
+
+      {/* Footer Section */}
+      <div style={{ 
+        padding: '20px 12px', 
+        background: 'rgba(0,0,0,0.1)', 
+        borderTop: '1px solid rgba(255,255,255,0.03)' 
+      }}>
+        {isHovered ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+          >
+            <div style={{ 
+              width: 28, height: 28, borderRadius: '50%', 
+              background: 'linear-gradient(135deg, var(--sage), var(--forest-deep))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 800, color: 'white',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              S
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+               <p style={{ fontSize: 13, fontWeight: 600, color: 'white', margin: 0 }}>Sefin Jose</p>
+    
+            </div>
+            <LogOut size={14} color="rgba(255,255,255,0.2)" style={{ cursor: 'pointer' }} />
+          </motion.div>
+        ) : (
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+             <User size={18} color="rgba(255,255,255,0.2)" />
+          </div>
+        )}
       </div>
-    </aside>
+    </motion.aside>
   )
 }
-

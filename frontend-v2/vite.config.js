@@ -9,11 +9,8 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/life-events': 'http://localhost:8000',
-      '/rag': 'http://localhost:8000',
-      '/tasks': 'http://localhost:8000',
-      '/workflows': 'http://localhost:8000',
-      '/users': 'http://localhost:8000',
+      '/api': 'http://127.0.0.1:8000',
+      '/uploads': 'http://127.0.0.1:8000',
     },
   },
 })

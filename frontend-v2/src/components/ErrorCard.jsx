@@ -28,11 +28,12 @@ export default function ErrorCard({ message, onRetry }) {
         System Interruption
       </p>
       <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, marginBottom: 20 }}>
-        {message || 'An unexpected anomaly occurred. Please verify backend link and re-initiate.'}
+        {message || 'An unexpected problem occurred. Please check your connection and try again.'}
       </p>
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
+        aria-label="Retry starting the analysis process"
         onClick={onRetry}
         className="btn-cust"
         style={{
@@ -45,8 +46,9 @@ export default function ErrorCard({ message, onRetry }) {
           border: 'none',
         }}
       >
-        <RotateCcw size={14} /> RE-INITIATE SEQUENCE
+        <RotateCcw size={14} /> TRY STARTING AGAIN
       </motion.button>
     </motion.div>
   )
 }
+

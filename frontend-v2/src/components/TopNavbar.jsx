@@ -4,17 +4,18 @@
  * Dark Forest styling.
  */
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react'
+import BrandLogo from './BrandLogo'
+import { Sparkles, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 
 const STAGE_LABELS = {
-  idle:         { text: 'Sequence Awaiting Input', icon: null, color: 'var(--muted)' },
-  analyzing:    { text: 'Synthesizing Event Data...', icon: Sparkles, color: 'var(--lavender)' },
-  analyzed:     { text: 'Event Classified · Accessing Databanks', icon: Sparkles, color: 'var(--lavender)' },
-  'loading-docs': { text: 'Scanning Knowledge Core...', icon: Sparkles, color: 'var(--lavender)' },
-  'docs-loaded':  { text: 'Requirements Extracted · Computing Vectors', icon: Sparkles, color: 'var(--lavender)' },
-  generating:   { text: 'Assembling Optimal Trajectory...', icon: Sparkles, color: 'var(--lavender)' },
-  complete:     { text: 'Trajectory Synthesized · Pending Authorization', icon: CheckCircle2, color: 'var(--sage)' },
-  error:        { text: 'Critical Error · Sequence Aborted', icon: AlertCircle, color: 'var(--coral)' },
+  idle:         { text: 'Ready for your next event?', icon: null, color: 'var(--muted)' },
+  analyzing:    { text: 'Understanding your situation...', icon: Loader2, color: 'var(--emerald)' },
+  analyzed:     { text: 'Situation identified · Searching resources', icon: CheckCircle2, color: 'var(--amber)' },
+  'loading-docs': { text: 'Searching for information...', icon: Loader2, color: 'var(--emerald)' },
+  'docs-loaded':  { text: 'Requirements found · Preparing details', icon: CheckCircle2, color: 'var(--amber)' },
+  generating:   { text: 'Creating your roadmap...', icon: Loader2, color: 'var(--amber)' },
+  complete:     { text: 'Roadmap created · Ready for review', icon: CheckCircle2, color: 'var(--sage)' },
+  error:        { text: 'Problem occurred · Analysis stopped', icon: AlertCircle, color: 'var(--coral)' },
 }
 
 export default function TopNavbar({ stage = 'idle', activePage = 'dashboard' }) {
@@ -27,7 +28,8 @@ export default function TopNavbar({ stage = 'idle', activePage = 'dashboard' }) 
         height: 56,
         background: 'rgba(13,26,21,0.8)',
         backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        borderBottom: '2px solid rgba(212, 124, 63, 0.35)',
+        boxShadow: '0 4px 25px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(212, 124, 63, 0.05)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -38,10 +40,15 @@ export default function TopNavbar({ stage = 'idle', activePage = 'dashboard' }) 
     >
       {/* Breadcrumb */}
       <div className="font-mono" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+        <BrandLogo size={16} />
         <span style={{ color: 'var(--muted)' }}>Pathfinder</span>
-        <span style={{ color: 'var(--forest-card)', fontSize: 14 }}>/</span>
+        <span style={{ color: 'var(--amber)', fontSize: 14, opacity: 0.6 }}>/</span>
         <span style={{ color: 'var(--fog)', fontWeight: 700 }}>
-          {activePage.replace('-', ' ')}
+          {activePage === 'saved' ? 'Event History' : 
+           activePage === 'event-detail' ? 'Event Detail' : 
+           activePage === 'dashboard' ? 'Dashboard' : 
+           activePage === 'journeys' ? 'My Calendar' :
+           activePage.replace('-', ' ')}
         </span>
       </div>
 
@@ -76,3 +83,4 @@ export default function TopNavbar({ stage = 'idle', activePage = 'dashboard' }) 
     </header>
   )
 }
+

@@ -2,36 +2,62 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import json
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"  # Use SQLite for simplicity
+import os
+
+# Create absolute path to DB file to ensure persistence regardless of CWD 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'sql_app.db')}" 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 def init_db():
     """Create all tables and seed the default demo user."""
-    from backend.models.user_model import User       # noqa: F401
-    from backend.models.life_event_model import LifeEvent  # noqa: F401
-    from backend.models.task_model import Task       # noqa: F401
-    from backend.models.reminder_log_model import ReminderLog  # noqa: F401
-    from backend.models.knowledge_base_model import KnowledgeBaseEntry  # noqa: F401
+    from backend.models import (
+        User, LifeEvent, Task, ReminderLog, KnowledgeBaseEntry,
+        VaultDocument, VaultPlanLink, TaskDependency, SimulationLog, PersonalEvent,
+        TaskGuide
+    )
     Base.metadata.create_all(bind=engine)
     _seed_default_user()
 
 
 
 def _seed_default_user():
-    """Ensure user id=1 ('Demo User') exists.
-    Layer 1.4 has no authentication — all events are created under this user.
-    This will be replaced with real auth in a future layer.
-    """
-    from backend.models.user_model import User
+    """Ensure user id=1 ('New User') exists."""
+    from backend.models import User
     db = SessionLocal()
     try:
-        if not db.query(User).filter(User.id == 1).first():
-            db.add(User(id=1, name="Demo User", email="demo@pathfinder.ai"))
+        user1 = db.query(User).filter(User.id == 1).first()
+        if not user1:
+            db.add(User(
+                id=1, 
+                name="New User", 
+                email="user@pathfinder.ai",
+                job_city=None,
+                state_code=None,
+                timezone="Asia/Kolkata",
+                extracted_profile=json.dumps({
+                    "full_name": None,
+                    "mobile": None,
+                    "aadhaar_number": None,
+                    "dob": None,
+                    "joining_date": None,
+                    "employer": None
+                })
+            ))
             db.commit()
     finally:
         db.close()

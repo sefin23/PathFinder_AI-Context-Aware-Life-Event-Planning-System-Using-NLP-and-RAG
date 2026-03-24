@@ -52,6 +52,10 @@ class WorkflowProposalRequest(BaseModel):
         le=15,
         description="Number of knowledge-base entries to retrieve per life-event type.",
     )
+    start_date: Optional[str] = Field(
+        None,
+        description="Optional start date (ISO) to calculate real dates for tasks."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -118,6 +122,10 @@ class WorkflowProposalResponse(BaseModel):
 
     # Populated on success
     tasks: list[ProposedTask] = Field(default_factory=list)
+    explanation: Optional[str] = Field(
+        None,
+        description="The AI-generated document requirements and essentials for this event."
+    )
     retrieved_chunk_ids: list[int] = Field(
         default_factory=list,
         description="IDs of the knowledge-base chunks used to generate this workflow.",

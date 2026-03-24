@@ -2,14 +2,15 @@
  * TaskItem — an expandable task card with subtask hierarchy.
  * Dark Forest styling with spring-bounce checkboxes.
  */
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, ChevronDown, Sparkles, Trash2 } from 'lucide-react'
+import { ChevronRight, ChevronDown, Sparkles, Trash2, Zap, X } from 'lucide-react'
 import SubtaskList from './SubtaskList'
 import TaskProgressBar from './TaskProgressBar'
+import DatePill from './DatePill'
 
-const PRIORITY_COLORS = { 1: 'var(--coral)', 2: 'var(--amber)', 3: 'var(--sage)', 4: 'var(--lavender)', 5: 'var(--muted)' }
-const PRIORITY_LABELS = { 1: 'HIGH', 2: 'MED', 3: 'LOW', 4: 'AI', 5: 'OPT' }
+const PRIORITY_COLORS = { 1: 'var(--coral)', 2: 'var(--amber)', 3: 'var(--gold)', 4: 'var(--sage)', 5: 'var(--muted)' }
+const PRIORITY_LABELS = { 1: 'URGENT', 2: 'HIGH', 3: 'MED', 4: 'LOW', 5: 'OPT' }
 
 export default function TaskItem({
   task,
@@ -20,6 +21,7 @@ export default function TaskItem({
   onEditTitle,
   onEditPriority,
   onEditDays,
+  onEditScheduledDate,
   onDeleteTask,
   onToggleSubtask,
   onEditSubtask,
@@ -28,11 +30,12 @@ export default function TaskItem({
   onAddSubtask,
   onDeleteSubtask,
   onReorderSubtasks,
+  startDate,
 }) {
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(task.title)
-
+  const [showPriorityMenu, setShowPriorityMenu] = useState(false)
   if (!task) return null
   if (hideCompleted && task.done) return null
 
@@ -65,11 +68,16 @@ export default function TaskItem({
         alignItems: 'stretch',
         gap: 0,
         padding: 0,
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid rgba(255,255,255,0.05)',
-        borderRadius: 'var(--r-md)',
-        marginBottom: 10,
-        transition: 'all 0.3s',
+        background: 'var(--forest-card)',
+        border: 'none',
+        borderLeft: `6px solid ${task.done ? '#ddd' : priorityColor}`,
+        borderRadius: '4px',
+        marginBottom: 32,
+        padding: 0,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'visible',
+        boxShadow: '0 25px 50px rgba(0,0,0,0.7)',
+        position: 'relative'
       }}
     >
       {/* Task header row */}
@@ -92,14 +100,14 @@ export default function TaskItem({
             background: 'none',
             border: 'none',
             cursor: subtasks.length > 0 ? 'pointer' : 'default',
-            color: subtasks.length > 0 ? 'var(--fog)' : 'transparent',
+            color: subtasks.length > 0 ? '#999' : 'transparent',
             display: 'flex',
             padding: 2,
             flexShrink: 0,
             transition: 'color 0.2s',
           }}
           onMouseEnter={e => { if(subtasks.length > 0) e.currentTarget.style.color = 'white'}}
-          onMouseLeave={e => { if(subtasks.length > 0) e.currentTarget.style.color = 'var(--fog)'}}
+          onMouseLeave={e => { if(subtasks.length > 0) e.currentTarget.style.color = '#999'}}
         >
           {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </button>
@@ -117,13 +125,14 @@ export default function TaskItem({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: 4,
             padding: '4px 8px',
             borderRadius: 'var(--r-sm)',
             background: `rgba(${
               task.priority === 1 ? '216,110,110' :
               task.priority === 2 ? '212,124,63' :
-              task.priority === 3 ? '146,171,155' :
-              task.priority === 4 ? '123,111,160' :
+              task.priority === 3 ? '201,168,76' : 
+              task.priority === 4 ? '92,140,117' :
               '148,163,184'
             }, 0.1)`,
             color: priorityColor,
@@ -138,6 +147,7 @@ export default function TaskItem({
             transition: 'all 0.2s'
           }}
         >
+          {task.urgency_score > 70 && <Zap size={10} fill={priorityColor} stroke="none" />}
           {PRIORITY_LABELS[task.priority] || `P${task.priority}`}
         </div>
 
@@ -176,8 +186,8 @@ export default function TaskItem({
               onKeyDown={(e) => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') setEditing(false) }}
               style={{
                 width: '100%',
-                background: 'var(--forest-card2)',
-                border: '1px solid var(--sage)',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.15)',
                 borderRadius: 'var(--r-sm)',
                 padding: '4px 10px',
                 color: 'white',
@@ -192,8 +202,9 @@ export default function TaskItem({
               className="cbl"
               title="Click to edit"
               style={{
-                fontSize: 15,
-                fontWeight: task.done ? 400 : 500,
+                fontSize: 18,
+                fontWeight: 800,
+                fontFamily: 'var(--font-heading)',
                 color: task.done ? 'var(--muted)' : 'white',
                 textDecoration: task.done ? 'line-through' : 'none',
                 cursor: 'text',
@@ -209,30 +220,67 @@ export default function TaskItem({
           )}
           {/* Subtitle: description */}
           {task.description && !editing && (
-            <span style={{ fontSize: 12, color: 'var(--fog)', display: 'block', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: task.done ? 0.5 : 1 }}>
+            <span style={{ fontSize: 13, color: 'var(--fog)', display: 'block', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: task.done ? 0.5 : 1 }}>
               {task.description}
             </span>
           )}
         </div>
 
-        {/* AI Tag */}
-        {!task.done && task.id && (
-           <span className="cai font-mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--lavender)', opacity: 0.8, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(123,111,160,0.1)', padding: '2px 8px', borderRadius: 'var(--r-pill)' }}>
-             <Sparkles size={10} /> AI
-           </span>
-        )}
+
+
+        {/* Priority Picker */}
+        <div data-no-expand style={{ position: 'relative', display: 'flex', gap: 4, flexShrink: 0 }}>
+          <AnimatePresence mode="wait">
+            {showPriorityMenu ? (
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 'auto', opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                style={{ display: 'flex', gap: 2, background: 'rgba(0,0,0,0.6)', padding: '2px 4px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden', alignItems: 'center' }}
+              >
+                {[1, 2, 3, 4, 5].map(p => (
+                  <button
+                    key={p}
+                    onClick={(e) => { e.stopPropagation(); onEditPriority?.(task.id, p); setShowPriorityMenu(false) }}
+                    style={{
+                      background: task.priority === p ? PRIORITY_COLORS[p] : 'transparent',
+                      border: 'none', borderRadius: 4, width: 24, height: 20, cursor: 'pointer',
+                      color: task.priority === p ? 'var(--forest-deep)' : PRIORITY_COLORS[p],
+                      fontSize: 10, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s'
+                    }}
+                  >
+                    P{p}
+                  </button>
+                ))}
+                <button onClick={(e) => { e.stopPropagation(); setShowPriorityMenu(false) }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0 4px', display: 'flex' }}><X size={12} /></button>
+              </motion.div>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowPriorityMenu(true) }}
+                title="Change priority"
+                style={{
+                  background: `rgba(${task.priority === 1 ? '216,110,110' : task.priority === 2 ? '212,124,63' : '92,140,117'},0.12)`,
+                  border: `1px solid ${priorityColor}40`, borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: priorityColor,
+                  display: 'flex', alignItems: 'center', gap: 4
+                }}
+              >
+                <span className="font-mono" style={{ fontSize: 10, fontWeight: 800 }}>P{task.priority}</span>
+              </button>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Due offset */}
         {task.suggested_due_offset_days != null && (
           <div
             data-no-expand
-            style={{ 
+            style={{
             display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
             background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--r-sm)',
             padding: '4px 8px', border: '1px solid rgba(255,255,255,0.08)'
           }}>
             <span className="font-mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Day</span>
-            <input 
+            <input
               aria-label="Task due offset days"
               type="number" min="0"
               value={task.suggested_due_offset_days}
@@ -249,12 +297,22 @@ export default function TaskItem({
                 textAlign: 'center',
                 outline: 'none',
                 padding: '0 2px',
-                transition: 'border-color 0.2s'
+                WebkitAppearance: 'none',
+                MozAppearance: 'textfield'
               }}
-              onFocus={e => e.target.style.borderBottomColor = 'var(--sage)'}
-              onBlur={e => e.target.style.borderBottomColor = 'rgba(255,255,255,0.2)'}
             />
           </div>
+        )}
+
+        {/* Scheduled Date Pill */}
+        {(task.scheduled_date || onEditScheduledDate) && (
+          <DatePill
+            date={task.scheduled_date}
+            onDateChange={(newDate) => onEditScheduledDate?.(task.id, newDate)}
+            editable={!!onEditScheduledDate}
+            hasConflict={task.has_scheduling_conflict}
+            minDate={startDate}
+          />
         )}
 
         {/* Delete (hover) */}
@@ -303,3 +361,4 @@ export default function TaskItem({
     </motion.div>
   )
 }
+

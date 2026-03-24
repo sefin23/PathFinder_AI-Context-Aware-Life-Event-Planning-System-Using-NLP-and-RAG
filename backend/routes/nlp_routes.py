@@ -12,13 +12,15 @@ Rules enforced here:
 
 import logging
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
+from sqlalchemy.orm import Session
 
 from backend.schemas.nlp_schema import (
     LifeEventAnalyzeRequest,
     LifeEventAnalyzeResponse,
 )
 from backend.services.nlp_service import classify_life_event
+from backend.database import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,10 @@ router = APIRouter()
         "timeline, and confidence). No data is saved to the database."
     ),
 )
-def analyze_life_event(body: LifeEventAnalyzeRequest) -> LifeEventAnalyzeResponse:
+def analyze_life_event(
+    body: LifeEventAnalyzeRequest,
+    db: Session = Depends(get_db),
+) -> LifeEventAnalyzeResponse:
     """
     POST /life-events/analyze
 
@@ -45,7 +50,7 @@ def analyze_life_event(body: LifeEventAnalyzeRequest) -> LifeEventAnalyzeRespons
     - Confidence < 0.6 is flagged in the response message.
     """
     try:
-        classification = classify_life_event(body.text)
+        classification = classify_life_event(db, body.text, skip_clarification=body.skip_clarification)
     except RuntimeError as exc:
         logger.error("NLP service error: %s", exc)
         raise HTTPException(

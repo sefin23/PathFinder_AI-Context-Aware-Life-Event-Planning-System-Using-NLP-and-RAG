@@ -101,13 +101,26 @@ def approve_workflow(
         ValueError:  If life_event_id does not exist.
         RuntimeError: If DB commit fails.
     """
-    if not _life_event_exists(db, request.life_event_id):
+    life_event = db.query(LifeEvent).filter(LifeEvent.id == request.life_event_id).first()
+    if not life_event:
         raise ValueError(
             f"LifeEvent with id={request.life_event_id} does not exist. "
             "Create the life event first."
         )
 
     base_time = _utc_now()
+    if request.start_date:
+        # DB consistently uses naive UTC
+        base_time = request.start_date
+        if base_time.tzinfo:
+            base_time = base_time.astimezone(timezone.utc).replace(tzinfo=None)
+        life_event.start_date = base_time
+        db.add(life_event)
+
+    if request.requirements_json:
+        life_event.requirements_json = request.requirements_json
+        db.add(life_event)
+
     existing = _existing_titles(db, request.life_event_id)
 
     created: list[CreatedTaskItem] = []
@@ -124,16 +137,20 @@ def approve_workflow(
                 skipped.append(approved_task.title)
                 continue
 
+            logger.info("Processing task: %s", approved_task.title)
             # ── Create parent task ───────────────────────────────────────
             parent = Task(
                 title=approved_task.title,
                 description=approved_task.description,
                 priority=approved_task.priority,
                 due_date=_due_date(approved_task.due_offset_days, base_time),
-                status=TaskStatus.pending,
+                status=approved_task.status or TaskStatus.pending,
                 life_event_id=request.life_event_id,
                 parent_id=None,
                 reminder_opt_out=False,
+                phase_title=approved_task.phase_title,
+                task_type=approved_task.task_type,
+                scheduled_date=approved_task.scheduled_date,
             )
             db.add(parent)
             db.flush()  # populate parent.id without committing
@@ -163,10 +180,13 @@ def approve_workflow(
                     description=None,
                     priority=sub.priority,
                     due_date=_due_date(sub.due_offset_days, base_time),
-                    status=TaskStatus.pending,
+                    status=sub.status or TaskStatus.pending,
                     life_event_id=request.life_event_id,
                     parent_id=parent.id,
                     reminder_opt_out=False,
+                    task_type=sub.task_type,
+                    scheduled_date=sub.scheduled_date,
+                    phase_title=approved_task.phase_title,  # Inherit parent's phase
                 )
                 db.add(child)
                 db.flush()
@@ -214,5 +234,5 @@ def approve_workflow(
         life_event_id=request.life_event_id,
         created_tasks=created,
         skipped_duplicates=skipped,
-        message=message,
+        message=f"{message} Detailed created list: { [c.title for c in created] }",
     )

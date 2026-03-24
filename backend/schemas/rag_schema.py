@@ -64,6 +64,7 @@ class RetrievedChunk(BaseModel):
         le=1.0,
         description="Cosine similarity between query embedding and this entry (0–1).",
     )
+    portal_url: Optional[str] = Field(None, description="Direct link to official portal for this requirement.")
 
 
 # ---------------------------------------------------------------------------

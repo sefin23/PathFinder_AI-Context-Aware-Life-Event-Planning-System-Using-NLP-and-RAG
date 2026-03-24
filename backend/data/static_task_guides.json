@@ -1,0 +1,177 @@
+{
+  "register_business_name": {
+    "title": "Register the business",
+    "estimated_mins": 45,
+    "url": "https://www.mca.gov.in/",
+    "steps": [
+      {
+        "num": 1,
+        "title": "Choose your business structure",
+        "description": "Decide between Proprietorship, Partnership, LLP, or Private Limited Company. For most small businesses, Proprietorship or LLP is recommended. Each has different registration requirements and tax implications.",
+        "action": null
+      },
+      {
+        "num": 2,
+        "title": "Check name availability",
+        "description": "Visit the MCA (Ministry of Corporate Affairs) portal to check if your desired business name is available. The name must be unique and not similar to existing registered businesses.",
+        "action": {
+          "type": "link",
+          "label": "Check Name on MCA Portal",
+          "url": "https://www.mca.gov.in/mcafoportal/nameAvailability.do"
+        }
+      },
+      {
+        "num": 3,
+        "title": "Gather required documents",
+        "description": "You'll need: PAN Card, Aadhaar Card, Address Proof (utility bill/rent agreement), passport-size photograph, and digital signature (DSC) if incorporating a company.",
+        "action": null
+      },
+      {
+        "num": 4,
+        "title": "Apply for DIN (Director Identification Number)",
+        "description": "If you're registering a company or LLP, each director/partner needs a DIN. Apply through the MCA portal using Form DIR-3. Processing typically takes 2-3 days.",
+        "action": {
+          "type": "link",
+          "label": "Apply for DIN",
+          "url": "https://www.mca.gov.in/MinistryV2/din.html"
+        }
+      },
+      {
+        "num": 5,
+        "title": "File incorporation documents",
+        "description": "Submit the incorporation application with MOA (Memorandum of Association) and AOA (Articles of Association). For online filing, use SPICe+ form on MCA portal. Attach all required documents digitally.",
+        "action": {
+          "type": "link",
+          "label": "File SPICe+ Form",
+          "url": "https://www.mca.gov.in/mcafoportal/loginEMCA.do"
+        }
+      },
+      {
+        "num": 6,
+        "title": "Pay registration fees",
+        "description": "Pay the government fee based on your business structure and authorized capital. Fees range from ₹500 (Proprietorship) to ₹10,000+ (Private Limited). Payment is made online through the MCA portal.",
+        "action": null
+      },
+      {
+        "num": 7,
+        "title": "Receive Certificate of Incorporation",
+        "description": "After verification (typically 7-15 days), you'll receive the Certificate of Incorporation via email. Download and save this document—it's proof of your business registration.",
+        "action": null
+      },
+      {
+        "num": 8,
+        "title": "Apply for PAN and TAN",
+        "description": "Your business needs its own PAN (Permanent Account Number) and TAN (Tax Deduction Account Number). These are automatically generated with SPICe+ filing, but verify receipt.",
+        "action": null
+      }
+    ],
+    "expected_result": "Certificate of Incorporation, Business PAN, and TAN numbers",
+    "what_to_save": "Certificate of Incorporation (CIN), Business PAN card, TAN certificate, and approval emails from MCA"
+  },
+  "obtain_business_registration_number": {
+    "title": "Obtain business registration number",
+    "estimated_mins": 30,
+    "url": "https://udyamregistration.gov.in/",
+    "steps": [
+      {
+        "num": 1,
+        "title": "Determine registration type",
+        "description": "For MSMEs (Micro, Small & Medium Enterprises), register for Udyam Registration. For shops and establishments, register with your state's Labour Department.",
+        "action": null
+      },
+      {
+        "num": 2,
+        "title": "Visit Udyam Registration portal",
+        "description": "The Udyam portal is the single-window system for MSME registration. It's free and can be completed online in 15-20 minutes if you have all documents ready.",
+        "action": {
+          "type": "link",
+          "label": "Open Udyam Portal",
+          "url": "https://udyamregistration.gov.in/Udyam_Online_Application.aspx"
+        }
+      },
+      {
+        "num": 3,
+        "title": "Enter Aadhaar number",
+        "description": "For proprietorship, enter your personal Aadhaar. For companies/LLPs, enter the authorized signatory's Aadhaar. You'll receive an OTP for verification.",
+        "action": {
+          "type": "copy",
+          "label": "Copy Aadhaar",
+          "value": "[Your Aadhaar from Vault]"
+        }
+      },
+      {
+        "num": 4,
+        "title": "Fill business details",
+        "description": "Enter: Business name, PAN, address, bank account details, investment in plant & machinery, and number of employees. All fields are mandatory.",
+        "action": null
+      },
+      {
+        "num": 5,
+        "title": "Submit and get Udyam Number",
+        "description": "After submitting, you'll instantly receive a Udyam Registration Certificate with a unique 19-digit UDYAM number (e.g., UDYAM-XX-00-0000000). Download the PDF certificate.",
+        "action": null
+      }
+    ],
+    "expected_result": "Udyam Registration Certificate with unique registration number",
+    "what_to_save": "Udyam Registration Certificate (PDF), Udyam Number (19 digits)"
+  },
+  "define_business_plan": {
+    "title": "Define business plan",
+    "estimated_mins": 120,
+    "url": "https://msme.gov.in/",
+    "steps": [
+      {
+        "num": 1,
+        "title": "Start with Executive Summary",
+        "description": "Write a 1-2 page overview of your business concept, mission, target market, competitive advantage, and financial highlights. This is written last but appears first. Keep it concise and compelling.",
+        "action": null
+      },
+      {
+        "num": 2,
+        "title": "Describe your business model",
+        "description": "Explain what problem you're solving, who your customers are, how you'll make money (revenue streams), your pricing strategy, and what makes you different from competitors.",
+        "action": null
+      },
+      {
+        "num": 3,
+        "title": "Conduct market analysis",
+        "description": "Research your target market size, demographics, trends, and growth potential. Identify your top 3-5 competitors and analyze their strengths/weaknesses.",
+        "action": {
+          "type": "link",
+          "label": "MSME Market Research",
+          "url": "https://msme.gov.in/relatedlinks/market-studies-and-reports"
+        }
+      },
+      {
+        "num": 4,
+        "title": "Define organization structure",
+        "description": "Outline your team structure, key roles, and responsibilities. Include founder bios highlighting relevant experience.",
+        "action": null
+      },
+      {
+        "num": 5,
+        "title": "Detail your products/services",
+        "description": "Describe what you're selling in detail—features, benefits, development stage, and future roadmap. Include photos or mockups if available.",
+        "action": null
+      },
+      {
+        "num": 6,
+        "title": "Create marketing & sales strategy",
+        "description": "How will you acquire customers? Define your channels, marketing budget, customer acquisition cost, and sales process.",
+        "action": null
+      },
+      {
+        "num": 7,
+        "title": "Develop financial projections",
+        "description": "Create 3-year projections including Income Statement, Cash Flow, and Balance Sheet. Calculate break-even point and funding requirements.",
+        "action": {
+          "type": "link",
+          "label": "Business Plan Template",
+          "url": "https://msme.gov.in/sites/default/files/MSMEFP.pdf"
+        }
+      }
+    ],
+    "expected_result": "A comprehensive business plan ready for investors or banks",
+    "what_to_save": "Final business plan PDF, financial projection spreadsheets"
+  }
+}

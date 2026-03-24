@@ -16,8 +16,14 @@ class LifeEvent(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
+    display_title = Column(String, nullable=True)
     description = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+    timeline = Column(String, nullable=True)
+    metadata_json = Column(String, nullable=True) # For extra facts like employer, car model, etc.
+    requirements_json = Column(String, nullable=True) # Persisted AI-generated document requirements
     status = Column(SQLEnum(LifeEventStatus), default=LifeEventStatus.active, nullable=False)
+    start_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
                         onupdate=lambda: datetime.now(timezone.utc))

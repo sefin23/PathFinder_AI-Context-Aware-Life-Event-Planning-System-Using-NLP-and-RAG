@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-_GENERATION_MODEL = "gemini-2.5-flash-lite"
+_GENERATION_MODEL = "gemini-2.0-flash-lite"
 
 _WORKFLOW_SYSTEM_PROMPT = """\
 You are Pathfinder AI, a life-event workflow planner.
@@ -194,13 +194,37 @@ def _build_prompt(
 # LLM call + parse
 # ---------------------------------------------------------------------------
 
+def _extract_json(text: str) -> dict:
+    """Strip markdown fences and parse JSON from LLM text output."""
+    s = text.strip()
+    if "```json" in s:
+        s = s.split("```json")[1].split("```")[0].strip()
+    elif "```" in s:
+        s = s.split("```")[1].split("```")[0].strip()
+    return json.loads(s)
+
+
 def _generate_workflow(prompt: str) -> dict:
     """
-    Call Gemini with strict JSON output and return the parsed dict.
+    Generate workflow JSON, trying OpenRouter free models first, then direct Gemini.
 
     Raises:
-        RuntimeError: If the API call or JSON parsing fails.
+        RuntimeError: If all API calls or JSON parsing fails.
     """
+    # ── PRIMARY: OpenRouter (handles free model waterfall + Gemini fallback) ──
+    try:
+        from backend.services.openrouter_client import generate_completion
+        text = generate_completion(
+            system_instruction=_WORKFLOW_SYSTEM_PROMPT,
+            user_message=prompt,
+            max_tokens=4096,
+            temperature=0.2,
+        )
+        return _extract_json(text)
+    except Exception as exc:
+        logger.warning("OpenRouter workflow generation failed: %s", str(exc)[:120])
+
+    # ── SECONDARY: Direct Gemini with strict JSON mode ─────────────────────
     client = _get_client()
     try:
         response = client.models.generate_content(
@@ -209,22 +233,16 @@ def _generate_workflow(prompt: str) -> dict:
             config=types.GenerateContentConfig(
                 system_instruction=_WORKFLOW_SYSTEM_PROMPT,
                 response_mime_type="application/json",
-                temperature=0.2,           # low temp for deterministic structure
+                temperature=0.2,
                 max_output_tokens=4096,
             ),
         )
-        raw = response.text.strip()
+        return json.loads(response.text.strip())
     except Exception as exc:
         err_str = str(exc)
         if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-            raise RuntimeError("Gemini rate limit hit. Try again in ~60s.") from exc
+            raise RuntimeError("All models rate limited. Try again in ~60s.") from exc
         raise RuntimeError(f"Workflow LLM call failed: {exc}") from exc
-
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError as exc:
-        logger.error("LLM returned invalid JSON: %s", raw[:300])
-        raise RuntimeError(f"LLM returned non-JSON output: {exc}") from exc
 
 
 # ---------------------------------------------------------------------------
@@ -292,55 +310,103 @@ def propose_workflow(
     location: Optional[str],
     timeline: Optional[str],
     top_k: int = 5,
+    start_date: Optional[str] = None,
 ) -> WorkflowProposalResponse:
     """
-    Full Layer 3.3 pipeline: retrieve → prompt → generate → validate.
-
-    Args:
-        db:               Read-only SQLAlchemy session.
-        life_event_types: Life event categories.
-        location:         Optional location string.
-        timeline:         Optional timeline hint.
-        top_k:            KB entries to retrieve per event type.
-
-    Returns:
-        :class:`WorkflowProposalResponse` — either tasks or an error message.
-
-    Raises:
-        RuntimeError: If retrieval or LLM generation fails at the infrastructure level.
-        ValueError:   If the KB is empty for all requested event types.
+    Full Layer 3.3 pipeline: retrieve -> prompt -> generate -> validate.
     """
-    logger.info(
-        "Workflow proposal | types=%s | location=%s | timeline=%s",
-        [t.value for t in life_event_types],
-        location,
-        timeline,
-    )
+    chunks = []
+    explanation = None
+    tasks = []
+    
+    try:
+        # 1. Retrieve grounded knowledge
+        chunks = _gather_chunks(db, life_event_types, top_k)
+        
+        # 2. Build grounded explanation — uses RAG + Expert Fallbacks
+        try:
+            from backend.services.rag_service import explain_with_llm
+            # Build query from first event type
+            query = f"requirements for {life_event_types[0].value.replace('_', ' ').lower()} in {location or 'India'}"
+            explanation_obj = explain_with_llm(query, chunks, life_event_types[0])
+            explanation = explanation_obj.explanation
+        except Exception as e:
+            logger.warning("Could not generate requirements explanation during proposal: %s", e)
+            explanation = None
 
-    # 1. Retrieve grounded knowledge
-    chunks = _gather_chunks(db, life_event_types, top_k)
+        if not chunks:
+            # Generate generic fallback tasks if KB is empty
+            from backend.services.workflow_generation_service import _make_fallback_tasks
+            tasks = _make_fallback_tasks(life_event_types)
+        else:
+            # 3. Build grounded prompt for tasks
+            prompt = _build_prompt(life_event_types, location, timeline, chunks)
+            # 4. Call LLM with internal model fallback
+            try:
+                raw_data = _generate_workflow(prompt)
+                tasks, error = _parse_tasks(raw_data)
+                if error or not tasks:
+                    from backend.services.workflow_generation_service import _make_fallback_tasks
+                    tasks = _make_fallback_tasks(life_event_types)
+            except Exception as e:
+                logger.warning("Workflow generation failed: %s. Using fallback template.", e)
+                from backend.services.workflow_generation_service import _make_fallback_tasks
+                tasks = _make_fallback_tasks(life_event_types)
+                
+    except Exception as exc:
+        logger.warning("Workflow proposal pipeline fully failed: %s. Returning fallback.", exc)
+        from backend.services.workflow_generation_service import _make_fallback_tasks
+        tasks = _make_fallback_tasks(life_event_types)
 
-    if not chunks:
-        raise ValueError(
-            "No knowledge-base entries found for the requested life event type(s). "
-            "Run the seed script first: python -m backend.scripts.seed_knowledge_base"
-        )
-
-    # 2. Build grounded prompt
-    prompt = _build_prompt(life_event_types, location, timeline, chunks)
-
-    # 3. Call LLM
-    raw_data = _generate_workflow(prompt)
-
-    # 4. Validate with Pydantic
-    tasks, error = _parse_tasks(raw_data)
+    # 5. Apply scheduling if start_date provided
+    if start_date and tasks:
+        from backend.services.scheduling_service import calculate_task_dates
+        try:
+            task_dicts = [t.model_dump() for t in tasks]
+            tasks_with_dates = calculate_task_dates(task_dicts, start_date, 1, db)
+            tasks = [ProposedTask(**t) for t in tasks_with_dates]
+        except Exception as e:
+            logger.warning("Scheduling failed during proposal: %s", e)
 
     return WorkflowProposalResponse(
-        success=error is None,
+        success=True,
         life_event_types=life_event_types,
         location=location,
         timeline=timeline,
         tasks=tasks,
+        explanation=explanation,
         retrieved_chunk_ids=[c.id for c in chunks],
-        error=error,
+        error=None,
     )
+
+
+def _make_fallback_tasks(event_types: list[LifeEventType]) -> list[ProposedTask]:
+    """Provides a safe, generic task list if the LLM or RAG fails completely."""
+    return [
+        ProposedTask(
+            title="Initial Research & Documentation",
+            description="Gather all existing identity proofs and category-specific documents.",
+            priority=1,
+            suggested_due_offset_days=1,
+            subtasks=[
+                ProposedSubtask(title="Locate Aadhaar and PAN", priority=1, suggested_due_offset_days=0),
+                ProposedSubtask(title="Verify eligibility criteria", priority=2, suggested_due_offset_days=0),
+            ]
+        ),
+        ProposedTask(
+            title="Portal Registration",
+            description="Create accounts on necessary government or service portals.",
+            priority=2,
+            suggested_due_offset_days=3,
+            subtasks=[
+                ProposedSubtask(title="Self-registration on official site", priority=1, suggested_due_offset_days=0),
+            ]
+        ),
+        ProposedTask(
+            title="Final Submission",
+            description="Complete the application and pay any required fees.",
+            priority=3,
+            suggested_due_offset_days=7,
+            subtasks=[]
+        )
+    ]

@@ -50,7 +50,7 @@ def retrieve_requirements(
     POST /rag/retrieve
 
     Full RAG pipeline:
-      1. Embed the query (Gemini text-embedding-004).
+      1. Embed the query (Gemini Embedding 2).
       2. Cosine-similarity search over knowledge_base table.
       3. Gemini explains retrieved chunks — grounded only on retrieved content.
     """

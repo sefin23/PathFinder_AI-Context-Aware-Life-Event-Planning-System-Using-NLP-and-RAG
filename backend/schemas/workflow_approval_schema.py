@@ -4,6 +4,7 @@ Pydantic schemas for Layer 3.4 — Workflow Approval & Task Creation.
 Pure data contracts. No database access here.
 """
 
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field
 
@@ -22,6 +23,9 @@ class ApprovedSubtask(BaseModel):
         ge=0,
         description="Days from today (UTC) when this subtask should be done.",
     )
+    scheduled_date: Optional[datetime] = None
+    task_type: Optional[str] = None
+    status: Optional[str] = "pending"
 
 
 # ---------------------------------------------------------------------------
@@ -39,6 +43,10 @@ class ApprovedTask(BaseModel):
         ge=0,
         description="Days from today (UTC) when this task should be completed.",
     )
+    phase_title: Optional[str] = None
+    scheduled_date: Optional[datetime] = None
+    task_type: Optional[str] = None
+    status: Optional[str] = "pending"
     subtasks: list[ApprovedSubtask] = Field(
         default_factory=list,
         description="Optional nested subtasks to create under this task.",
@@ -66,6 +74,14 @@ class WorkflowApprovalRequest(BaseModel):
         ...,
         min_length=1,
         description="Tasks (and their subtasks) to persist. Must contain at least one task.",
+    )
+    start_date: Optional[datetime] = Field(
+        None,
+        description="Optional start date for the journey."
+    )
+    requirements_json: Optional[str] = Field(
+        None,
+        description="The AI-generated requirements to persist."
     )
 
 

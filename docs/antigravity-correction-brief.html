@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PathFinder — Antigravity Correction Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fd:#0d1a15;--fm:#1a2f26;--fc:#1e3529;--fc2:#243d30;--earth:#2d4a3e;
+  --sage:#5c8c75;--fog:#b8cfc7;--amber:#d47c3f;--al:#f0a96b;
+  --coral:#c65d4a;--lav:#7b6fa0;--gold:#c9a84c;
+  --on:rgba(255,255,255,.9);--mu:rgba(255,255,255,.38);--bd:rgba(255,255,255,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--fd);color:var(--on);min-height:100vh}
+
+.topbar{background:#060d08;border-bottom:1px solid var(--bd);display:flex;align-items:center;
+  height:50px;padding:0 28px;position:sticky;top:0;z-index:100;gap:16px}
+.tb-logo{font-family:'Playfair Display',serif;font-weight:800;font-size:14px;color:white;
+  display:flex;align-items:center;gap:7px}
+.tb-dot{width:7px;height:7px;border-radius:50%;background:var(--coral)}
+.tb-title{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--mu)}
+.tb-badge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 10px;
+  border-radius:999px;background:rgba(198,93,74,.15);border:1px solid rgba(198,93,74,.3);
+  color:#e88070;margin-left:auto}
+
+.shell{display:grid;grid-template-columns:190px 1fr;min-height:calc(100vh - 50px)}
+.sidebar{background:#050c07;border-right:1px solid var(--bd);padding:16px 0;
+  position:sticky;top:50px;height:calc(100vh - 50px);overflow-y:auto}
+.sb-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;
+  letter-spacing:.15em;color:var(--mu);padding:8px 12px 4px}
+.sb-a{display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:7px;
+  font-size:11px;color:var(--mu);cursor:pointer;transition:all .18s;border:none;background:none;width:100%;text-align:left;margin:0 2px}
+.sb-a:hover{background:rgba(255,255,255,.04);color:rgba(255,255,255,.7)}
+.sb-a.act{background:rgba(92,140,117,.1);color:var(--sage);border-left:2px solid var(--sage);padding-left:8px}
+.sb-a.red{color:rgba(198,93,74,.7)}
+.sb-a.red:hover,.sb-a.red.act{background:rgba(198,93,74,.1);color:#e88070;border-left-color:#e88070}
+.sb-ic{font-size:11px;width:14px;flex-shrink:0;text-align:center}
+hr.sbhr{border:none;border-top:1px solid var(--bd);margin:8px 14px}
+
+.main{overflow-y:auto}
+.page{display:none;padding:40px 48px;max-width:1040px}
+.page.show{display:block}
+
+/* TYPE */
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;
+  letter-spacing:.2em;color:var(--sage);margin-bottom:7px}
+.eyebrow.red{color:#e88070}
+h1{font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(24px,3vw,36px);
+  color:white;line-height:1.05;margin-bottom:10px}
+h1 em{color:var(--al);font-style:italic}
+h1.red em{color:#e88070}
+.pgdesc{font-size:13px;color:var(--mu);max-width:560px;line-height:1.75;font-weight:300;margin-bottom:28px}
+h2{font-family:'Playfair Display',serif;font-weight:700;font-size:19px;color:white;margin-bottom:6px}
+
+/* LAYOUT */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px}
+hr.div{border:none;border-top:1px solid var(--bd);margin:36px 0}
+
+/* CARDS */
+.card{background:var(--fc);border:1px solid var(--bd);border-radius:12px;padding:18px}
+.card2{background:var(--fc2);border:1px solid var(--bd);border-radius:9px;padding:13px}
+
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:9px;
+  padding:3px 9px;border-radius:999px;border:1px solid;margin:2px}
+.chip.sage{background:rgba(92,140,117,.1);border-color:rgba(92,140,117,.3);color:var(--sage)}
+.chip.amber{background:rgba(212,124,63,.1);border-color:rgba(212,124,63,.3);color:var(--al)}
+.chip.coral{background:rgba(198,93,74,.1);border-color:rgba(198,93,74,.3);color:#e88070}
+.chip.lav{background:rgba(123,111,160,.1);border-color:rgba(123,111,160,.3);color:#b0a8d0}
+.chip.muted{background:rgba(255,255,255,.04);border-color:var(--bd);color:var(--mu)}
+.chip.gold{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.3);color:var(--gold)}
+
+/* INFO BOXES */
+.ibox{border-radius:9px;padding:12px 16px;font-size:12px;line-height:1.75;margin-bottom:14px}
+.ibox.coral{background:rgba(198,93,74,.07);border:1px solid rgba(198,93,74,.2);border-left:3px solid var(--coral);color:var(--fog)}
+.ibox.sage{background:rgba(92,140,117,.07);border:1px solid rgba(92,140,117,.2);color:var(--fog)}
+.ibox.amber{background:rgba(212,124,63,.07);border:1px solid rgba(212,124,63,.2);border-left:3px solid var(--amber);color:var(--fog)}
+.ibox.gold{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-left:3px solid var(--gold);color:var(--fog)}
+.ibox strong{color:white}
+
+/* CODE */
+.codeblock{background:#060e09;border:1px solid rgba(92,140,117,.15);border-radius:11px;overflow:hidden;margin-bottom:14px}
+.cb-head{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.cb-lang{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:var(--mu)}
+.cb-file{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sage)}
+.cb-body{padding:16px;overflow-x:auto}
+pre{font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.75;color:rgba(255,255,255,.72);white-space:pre}
+.kw{color:#7b6fa0}.fn{color:#5c8c75}.st{color:#c9a84c}.cm{color:rgba(255,255,255,.25);font-style:italic}.ty{color:#f0a96b}.nu{color:#c65d4a}
+
+/* DIFF BOXES — what's wrong vs right */
+.diff-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.diff-box{border-radius:10px;padding:14px;font-size:12px;line-height:1.7}
+.diff-box.wrong{background:rgba(198,93,74,.07);border:1px solid rgba(198,93,74,.2)}
+.diff-box.right{background:rgba(92,140,117,.07);border:1px solid rgba(92,140,117,.2)}
+.diff-label{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;
+  letter-spacing:.12em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.diff-label.wrong{color:#e88070}
+.diff-label.right{color:var(--sage)}
+.diff-body{color:var(--mu)}
+.diff-body strong{color:white}
+
+/* LIVE DEMO STYLES */
+.demo-wrap{background:var(--fc2);border:1px solid var(--bd);border-radius:14px;padding:24px;margin-bottom:20px;position:relative}
+.demo-label{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;
+  letter-spacing:.15em;color:var(--sage);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.demo-label::after{content:'INTERACTIVE';font-size:7px;background:rgba(92,140,117,.15);
+  border:1px solid rgba(92,140,117,.3);border-radius:3px;padding:1px 5px;color:var(--sage)}
+
+/* Task card — exactly matching image 3 */
+.tc{background:var(--fc);border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:10px;transition:all .2s}
+.tc:hover{border-color:rgba(255,255,255,.13)}
+.tc-head{display:flex;align-items:center;gap:10px;padding:13px 15px;cursor:pointer}
+.tc-cb{width:20px;height:20px;border:2px solid var(--sage);border-radius:5px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:all .25s cubic-bezier(.34,1.56,.64,1)}
+.tc-cb.done{background:var(--sage);border-color:var(--sage)}
+.tc-cb.done::after{content:'✓';color:white;font-size:11px;font-weight:700}
+.tc-name{flex:1;font-size:13px;font-weight:500;color:white}
+.tc-badge{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 7px;border-radius:3px}
+.tc-arrow{font-size:10px;color:var(--mu);transition:transform .2s;width:16px;text-align:center}
+.tc.open .tc-arrow{transform:rotate(180deg)}
+.tc-body{display:none;padding:0 15px 15px;border-top:1px solid var(--bd)}
+.tc.open .tc-body{display:block}
+
+/* Required docs inside task */
+.req-docs-lbl{font-size:10px;color:var(--mu);margin:10px 0 6px}
+.req-doc{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:7px;
+  margin-bottom:4px;transition:all .2s}
+.req-doc.has{background:rgba(92,140,117,.07);border:1px solid rgba(92,140,117,.25)}
+.req-doc.need{background:rgba(212,124,63,.05);border:1px solid rgba(212,124,63,.2)}
+.req-doc-icon{font-size:12px}
+.req-doc-name{flex:1;font-size:11px;color:rgba(255,255,255,.75)}
+.req-vault{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 6px;
+  border-radius:999px;background:rgba(92,140,117,.12);border:1px solid rgba(92,140,117,.25);color:var(--sage)}
+
+/* The two CTAs — matching image exactly */
+.cta-row{display:flex;gap:8px;margin-top:12px}
+.btn-guide{flex:1;padding:10px 14px;
+  background:linear-gradient(135deg,rgba(212,124,63,.15),rgba(45,74,62,.3));
+  border:1px solid rgba(212,124,63,.3);border-radius:9px;
+  font-size:12px;color:var(--al);cursor:pointer;transition:all .2s;
+  font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-guide:hover{background:linear-gradient(135deg,rgba(212,124,63,.25),rgba(45,74,62,.4));transform:translateY(-1px)}
+.btn-done{padding:10px 14px;background:transparent;border:1px solid var(--bd);
+  border-radius:9px;font-size:12px;color:var(--mu);cursor:pointer;transition:all .2s;
+  font-family:'DM Sans',sans-serif;white-space:nowrap}
+.btn-done:hover{border-color:rgba(255,255,255,.2);color:white}
+
+/* Guide panel (bottom sheet) */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);
+  z-index:300;display:none;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{background:#0f1f18;border:1px solid var(--bd);border-radius:20px 20px 0 0;
+  width:100%;max-width:600px;max-height:88vh;overflow-y:auto;
+  animation:slideUp .32s cubic-bezier(.34,1.56,.64,1)}
+@keyframes slideUp{from{transform:translateY(80%);opacity:.5}to{transform:translateY(0);opacity:1}}
+
+.sheet-handle{width:36px;height:4px;background:rgba(255,255,255,.12);border-radius:2px;margin:12px auto 0}
+.sheet-hdr{padding:16px 20px 14px;border-bottom:1px solid var(--bd);position:relative}
+.sheet-tag{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;
+  letter-spacing:.15em;color:var(--amber);margin-bottom:4px}
+.sheet-title{font-family:'Playfair Display',serif;font-weight:700;font-size:17px;color:white;margin-bottom:3px}
+.sheet-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sheet-time{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 8px;
+  border-radius:999px;background:rgba(92,140,117,.12);border:1px solid rgba(92,140,117,.25);color:var(--sage)}
+.sheet-site{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--mu)}
+.sheet-close{position:absolute;top:14px;right:14px;background:none;border:none;
+  color:var(--mu);font-size:16px;cursor:pointer;padding:4px 8px;line-height:1}
+.sheet-close:hover{color:white}
+
+/* Prefill banner */
+.prefill-banner{background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(13,26,21,.3));
+  border:1px solid rgba(201,168,76,.22);border-radius:10px;padding:12px 14px;margin:12px 20px}
+.pb-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pb-star{font-size:16px}
+.pb-title{font-size:12px;font-weight:500;color:white}
+.pb-subtitle{font-size:10px;color:var(--mu);margin-bottom:8px;padding-left:24px}
+.pb-fields{display:flex;flex-direction:column;gap:4px;padding-left:0}
+.pb-field{display:flex;align-items:center;gap:8px;padding:5px 8px;
+  background:rgba(255,255,255,.04);border-radius:6px;border:1px solid var(--bd)}
+.pb-flbl{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--mu);width:88px;flex-shrink:0}
+.pb-fval{font-size:11px;color:white;flex:1}
+.pb-fsrc{font-family:'JetBrains Mono',monospace;font-size:7px;padding:2px 5px;border-radius:3px}
+.pb-fsrc.vault{background:rgba(92,140,117,.12);border:1px solid rgba(92,140,117,.25);color:var(--sage)}
+.pb-fsrc.profile{background:rgba(212,124,63,.12);border:1px solid rgba(212,124,63,.25);color:var(--al)}
+
+/* Steps */
+.steps-wrap{padding:4px 20px 8px}
+.step{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--bd)}
+.step:last-child{border-bottom:none}
+.step-num{width:26px;height:26px;border-radius:50%;flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:white;transition:all .3s}
+.step-num.done{background:var(--sage)}
+.step-num.active{background:var(--amber)}
+.step-num.todo{background:rgba(255,255,255,.1);color:var(--mu)}
+.step-title{font-size:12px;font-weight:500;color:white;margin-bottom:4px}
+.step-desc{font-size:11px;color:var(--mu);line-height:1.65;margin-bottom:7px}
+.step-actions{display:flex;gap:6px;flex-wrap:wrap}
+.sact{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;
+  border-radius:999px;font-size:10px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s}
+.sact.link{background:rgba(92,140,117,.12);border:1px solid rgba(92,140,117,.25);color:var(--sage)}
+.sact.link:hover{background:rgba(92,140,117,.2)}
+.sact.copy{background:rgba(212,124,63,.12);border:1px solid rgba(212,124,63,.25);color:var(--al)}
+.sact.copy:hover{background:rgba(212,124,63,.2)}
+
+/* What you'll get */
+.result-box{background:rgba(92,140,117,.06);border:1px solid rgba(92,140,117,.15);
+  border-radius:9px;padding:12px 14px;margin:8px 20px 0}
+.rb-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--sage);margin-bottom:6px}
+.rb-item{font-size:11px;color:var(--mu);display:flex;align-items:flex-start;gap:6px;padding:2px 0}
+.rb-item::before{content:'→';color:var(--sage);flex-shrink:0;margin-top:1px}
+
+/* Bottom CTA */
+.sheet-cta{padding:14px 20px}
+.sheet-cta-btn{width:100%;padding:12px;background:var(--amber);color:white;border:none;
+  border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:500;font-size:14px;
+  cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1)}
+.sheet-cta-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(212,124,63,.4)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fi{opacity:0;animation:fadeUp .4s ease forwards}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="tb-logo"><div class="tb-dot"></div>PathFinder</div>
+  <div class="tb-title">Antigravity Correction Brief</div>
+  <div class="tb-badge">⚠ 3 gaps to fix</div>
+</div>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div style="padding:0 10px">
+    <div class="sb-lbl">The gaps</div>
+    <button class="sb-a red act" onclick="showPage('gaps');setAct(this)"><span class="sb-ic">⚠</span>What's wrong</button>
+    <button class="sb-a" onclick="showPage('demo');setAct(this)"><span class="sb-ic">▶</span>What it should be</button>
+  </div>
+  <hr class="sbhr">
+  <div style="padding:0 10px">
+    <div class="sb-lbl">Fix 1 — Task card</div>
+    <button class="sb-a" onclick="showPage('fix-card');setAct(this)"><span class="sb-ic">🎨</span>Design diff</button>
+    <button class="sb-a" onclick="showPage('fix-card-code');setAct(this)"><span class="sb-ic">⚙️</span>JSX code</button>
+  </div>
+  <hr class="sbhr">
+  <div style="padding:0 10px">
+    <div class="sb-lbl">Fix 2 — Guide panel</div>
+    <button class="sb-a" onclick="showPage('fix-guide');setAct(this)"><span class="sb-ic">📋</span>What's missing</button>
+    <button class="sb-a" onclick="showPage('fix-guide-code');setAct(this)"><span class="sb-ic">⚙️</span>DB + code</button>
+  </div>
+  <hr class="sbhr">
+  <div style="padding:0 10px">
+    <div class="sb-lbl">Fix 3 — Vault reading</div>
+    <button class="sb-a" onclick="showPage('fix-vault');setAct(this)"><span class="sb-ic">🧠</span>Intelligence spec</button>
+    <button class="sb-a" onclick="showPage('fix-vault-code');setAct(this)"><span class="sb-ic">⚙️</span>API + code</button>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- ═══════ GAPS OVERVIEW ═══════ -->
+<div class="page show" id="pg-gaps">
+  <div class="eyebrow red">Correction brief · 3 things to fix</div>
+  <h1 class="red">What <em>Antigravity built</em><br>vs what was designed</h1>
+  <p class="pgdesc">Three screenshots show three gaps. Here's exactly what each one is and which page has the fix.</p>
+
+  <!-- Gap 1 -->
+  <div style="background:rgba(198,93,74,.05);border:1px solid rgba(198,93,74,.2);border-left:3px solid var(--coral);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+    <div style="display:flex;align-items:flex-start;gap:14px">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:white;flex-shrink:0">1</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500;color:white;margin-bottom:4px">Task card design is close but wrong in the details</div>
+        <div style="font-size:12px;color:var(--mu);line-height:1.7;margin-bottom:10px"><strong style="color:white">Image 1 shows:</strong> task card with a left red border for CRITICAL, checkboxes, "Guide me through this →" and "✓ Mark done" side by side — good structure. But the category header layout, "0/1 TASKS" chip, and DAY label styling don't match the spec from Image 3 which shows a cleaner version with vault tags inline on each required doc.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="chip coral">Design mismatch</span>
+          <span class="chip muted">→ Fix on "Design diff" page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gap 2 — THE BIG ONE -->
+  <div style="background:rgba(198,93,74,.08);border:2px solid rgba(198,93,74,.35);border-left:4px solid var(--coral);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+    <div style="display:flex;align-items:flex-start;gap:14px">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:white;flex-shrink:0;font-weight:700">2</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500;color:white;margin-bottom:4px">🚨 "No guide yet" — the guide data is not wired up</div>
+        <div style="font-size:12px;color:var(--mu);line-height:1.7;margin-bottom:10px"><strong style="color:white">Image 2 shows:</strong> clicking "Guide me through this" opens a bottom sheet that says "No guide yet for this task. Content is being researched." This means Antigravity built the guide panel UI but the task_guides data is not seeded in the database. The <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px">task_guides</code> table either doesn't exist, is empty, or the query isn't finding a match for this task ID. The guide data for core tasks must be seeded NOW — this is the entire differentiator of PathFinder.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="chip coral">Critical — blocks core UX</span>
+          <span class="chip muted">→ Fix on "DB + code" page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gap 3 -->
+  <div style="background:rgba(198,93,74,.05);border:1px solid rgba(198,93,74,.2);border-left:3px solid var(--coral);border-radius:12px;padding:18px 20px;margin-bottom:28px">
+    <div style="display:flex;align-items:flex-start;gap:14px">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:white;flex-shrink:0">3</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500;color:white;margin-bottom:4px">Vault intelligence page not built</div>
+        <div style="font-size:12px;color:var(--mu);line-height:1.7;margin-bottom:10px"><strong style="color:white">Image 5 shows:</strong> when a user uploads a doc, PathFinder should read it and show what it extracted — joining date set, office location found, BGV note added, address mismatch detected. This "vault reads your docs" intelligence display is not in Antigravity's implementation. The backend may not be doing the document reading either.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="chip amber">Important differentiator</span>
+          <span class="chip muted">→ Fix on "Intelligence spec" page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ibox gold"><strong>Priority order:</strong> Fix Gap 2 (no guide data) first — it's the biggest UX break. Then Fix 1 (card polish). Then Gap 3 (vault intelligence) which is more build work.</div>
+</div>
+
+<!-- ═══════ LIVE DEMO ═══════ -->
+<div class="page" id="pg-demo">
+  <div class="eyebrow">This is what it should look like</div>
+  <h1>The <em>correct</em> implementation</h1>
+  <p class="pgdesc">Expand a task. Click "Guide me through this". This is Image 3 + Image 4 working correctly. Compare this to what Antigravity built.</p>
+
+  <div class="demo-wrap fi">
+    <div class="demo-label">Guided task demo</div>
+    <p style="font-size:12px;color:var(--mu);margin-bottom:16px">Expand any task. Click "Guide me" to see the full step-by-step panel. This is what every task in PathFinder should have.</p>
+
+    <!-- Task 1 — expanded with vault docs -->
+    <div class="tc open" id="tc1">
+      <div class="tc-head" onclick="toggleTC('tc1')">
+        <div class="tc-cb done"></div>
+        <span class="tc-name">Collect Aadhaar + PAN Card</span>
+        <span class="tc-badge" style="background:rgba(198,93,74,.15);color:#e88070">CRITICAL</span>
+        <span class="tc-arrow">▾</span>
+      </div>
+      <div class="tc-body">
+        <div class="req-docs-lbl">Required documents:</div>
+        <div class="req-doc has">
+          <span class="req-doc-icon">📄</span>
+          <span class="req-doc-name">Aadhaar Card</span>
+          <span class="req-vault">from vault</span>
+        </div>
+        <div class="req-doc has">
+          <span class="req-doc-icon">📄</span>
+          <span class="req-doc-name">PAN Card</span>
+          <span class="req-vault">from vault</span>
+        </div>
+        <div class="cta-row">
+          <button class="btn-guide" onclick="openGuide('aadhaar')">🗺 Guide me through this →</button>
+          <button class="btn-done">✓ Mark done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task 2 — collapsed -->
+    <div class="tc" id="tc2">
+      <div class="tc-head" onclick="toggleTC('tc2')">
+        <div class="tc-cb"></div>
+        <span class="tc-name">Submit documents to HR</span>
+        <span class="tc-badge" style="background:rgba(212,124,63,.15);color:var(--al)">HIGH</span>
+        <span class="tc-arrow">▾</span>
+      </div>
+      <div class="tc-body">
+        <div class="req-docs-lbl">Required documents:</div>
+        <div class="req-doc need">
+          <span class="req-doc-icon">⬜</span>
+          <span class="req-doc-name">Offer Letter</span>
+          <button style="font-size:9px;padding:2px 8px;background:var(--amber);color:white;border:none;border-radius:999px;cursor:pointer;font-family:'DM Sans',sans-serif">+ Upload</button>
+        </div>
+        <div class="req-doc has">
+          <span class="req-doc-icon">📄</span>
+          <span class="req-doc-name">Degree Certificate</span>
+          <span class="req-vault">from vault</span>
+        </div>
+        <div class="cta-row">
+          <button class="btn-guide" onclick="openGuide('hr')">🗺 Guide me through this →</button>
+          <button class="btn-done">✓ Mark done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task 3 — collapsed -->
+    <div class="tc" id="tc3">
+      <div class="tc-head" onclick="toggleTC('tc3')">
+        <div class="tc-cb"></div>
+        <span class="tc-name">Open salary bank account</span>
+        <span class="tc-badge" style="background:rgba(92,140,117,.15);color:var(--sage)">MED</span>
+        <span class="tc-arrow">▾</span>
+      </div>
+      <div class="tc-body">
+        <div class="cta-row">
+          <button class="btn-guide" onclick="openGuide('bank')">🗺 Guide me through this →</button>
+          <button class="btn-done">✓ Mark done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ibox amber"><strong>Key difference from what Antigravity built:</strong> clicking "Guide me" must open a populated panel — not "No guide yet". Every task needs a <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px">task_guide</code> row seeded in the DB. See "DB + code" page for the exact schema and seed data.</div>
+</div>
+
+<!-- ═══════ FIX 1: CARD DESIGN ═══════ -->
+<div class="page" id="pg-fix-card">
+  <div class="eyebrow">Fix 1 — Task card</div>
+  <h1>Design <em>diff</em></h1>
+  <p class="pgdesc">The task card structure is right but several details are wrong. Here's every difference between what was built and what the spec says.</p>
+
+  <div class="diff-row">
+    <div class="diff-box wrong">
+      <div class="diff-label wrong">✗ What Antigravity built</div>
+      <div class="diff-body">
+        <strong>"TASK CATEGORIES"</strong> as a separate header section above the task — creates too much visual hierarchy<br><br>
+        <strong>"0/1 TASKS · 0%"</strong> row visible at category level — not needed at task level<br><br>
+        <strong>"DAY 0 / Mar 23 2026"</strong> label in orange-amber — too prominent, dates should be secondary<br><br>
+        <strong>Checkbox square</strong> — empty square with no visual state<br><br>
+        <strong>Guide button text</strong> — "🗺 🐾 Guide me through this →" — double icon, looks messy<br><br>
+        <strong>No vault tags</strong> on required docs — docs listed but no "from vault" / "upload" CTAs
+      </div>
+    </div>
+    <div class="diff-box right">
+      <div class="diff-label right">✓ What the spec says (Image 3)</div>
+      <div class="diff-body">
+        <strong>No separate category header</strong> — tasks are inside a journey section, the category is implied<br><br>
+        <strong>Task count</strong> shown only at section level, not per-task<br><br>
+        <strong>Due date</strong> in small JetBrains Mono muted text, secondary to task name<br><br>
+        <strong>Checkbox</strong> with sage green border, fills green on done, spring animation<br><br>
+        <strong>Guide button text</strong> — "🗺 Guide me through this →" — single compass icon<br><br>
+        <strong>Vault tags inline</strong> — each required doc shows "from vault" pill or "+ Upload" button
+      </div>
+    </div>
+  </div>
+
+  <div class="ibox sage">The card structure Antigravity built (Image 1) is actually close to the spec. The main corrections are: remove the category header block from inside each task card, add vault doc tags to each required document, and clean up the button icons. It's a 1–2 hour polish pass, not a rebuild.</div>
+
+  <hr class="div">
+  <h2 style="margin-bottom:14px">Correct category header (above tasks, not inside them)</h2>
+  <div class="card" style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <span style="font-size:18px">🪪</span>
+      <span style="font-family:'Playfair Display',serif;font-weight:700;font-size:16px;color:white">Identity & Documents</span>
+      <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 8px;border-radius:999px;background:rgba(212,124,63,.15);border:1px solid rgba(212,124,63,.3);color:var(--al)">● IN PROGRESS</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--mu)">□ 0/4 TASKS</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--mu);margin-left:auto">Day 0 · Mar 23</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--coral)">0%</span>
+    </div>
+  </div>
+  <div class="ibox amber"><strong>This section header lives once above the task list.</strong> The tasks themselves don't repeat this info. Each task card is just: checkbox + title + badge + arrow, then body with docs + CTAs when expanded.</div>
+</div>
+
+<!-- ═══════ FIX 1: CODE ═══════ -->
+<div class="page" id="pg-fix-card-code">
+  <div class="eyebrow">Fix 1 — Task card JSX</div>
+  <h1>Corrected <em>component</em></h1>
+
+  <div class="codeblock">
+    <div class="cb-head"><span class="cb-lang">JSX</span><span class="cb-file">components/TaskCard.jsx — corrected version</span></div>
+    <div class="cb-body"><pre><span class="cm">/**
+ * TaskCard — corrected to match design spec
+ * Key changes from what Antigravity built:
+ * 1. Removed category header block (goes in CategorySection, not here)
+ * 2. Added vault doc tags inline
+ * 3. Cleaned up guide button (single icon)
+ * 4. Spring animation on checkbox
+ */</span>
+
+<span class="kw">export function</span> <span class="fn">TaskCard</span>({ task, vaultDocs, onGuide, onDone }) {
+  <span class="kw">const</span> [open, setOpen] = useState(<span class="kw">false</span>)
+
+  <span class="cm">// Which required docs does user already have in vault?</span>
+  <span class="kw">const</span> <span class="fn">docStatus</span> = (reqId) => vaultDocs.some(d => d.requirement_id === reqId)
+
+  <span class="kw">return</span> (
+    &lt;motion.div layout
+      style={{ background: <span class="st">'var(--fc)'</span>, border: <span class="st">'1px solid var(--bd)'</span>, borderRadius: <span class="nu">12</span>,
+        overflow: <span class="st">'hidden'</span>, marginBottom: <span class="nu">10</span> }}&gt;
+
+      <span class="cm">/* ── HEADER ── */</span>
+      &lt;div onClick={() =&gt; setOpen(!open)}
+        style={{ display: <span class="st">'flex'</span>, alignItems: <span class="st">'center'</span>, gap: <span class="nu">10</span>,
+          padding: <span class="st">'13px 15px'</span>, cursor: <span class="st">'pointer'</span> }}&gt;
+
+        <span class="cm">/* Checkbox — spring animation, not plain square */</span>
+        &lt;motion.div
+          onClick={(e) =&gt; { e.stopPropagation(); onDone(task.id) }}
+          whileTap={{ scale: <span class="nu">0.9</span> }}
+          animate={task.done ? { scale: [<span class="nu">1</span>, <span class="nu">1.2</span>, <span class="nu">1</span>] } : {}}
+          style={{ width: <span class="nu">20</span>, height: <span class="nu">20</span>, borderRadius: <span class="nu">5</span>, flexShrink: <span class="nu">0</span>,
+            border: task.done ? <span class="st">'2px solid var(--sage)'</span> : <span class="st">'2px solid var(--sage)'</span>,
+            background: task.done ? <span class="st">'var(--sage)'</span> : <span class="st">'transparent'</span>,
+            display: <span class="st">'flex'</span>, alignItems: <span class="st">'center'</span>, justifyContent: <span class="st">'center'</span> }}&gt;
+          {task.done &amp;&amp; &lt;span style={{ color: <span class="st">'white'</span>, fontSize: <span class="nu">11</span>, fontWeight: <span class="nu">700</span> }}&gt;✓&lt;/span&gt;}
+        &lt;/motion.div&gt;
+
+        &lt;span style={{ flex: <span class="nu">1</span>, fontSize: <span class="nu">13</span>, fontWeight: <span class="nu">500</span>, color: <span class="st">'white'</span> }}&gt;
+          {task.title}
+        &lt;/span&gt;
+
+        &lt;PriorityBadge priority={task.priority} /&gt;
+
+        &lt;motion.span animate={{ rotate: open ? <span class="nu">180</span> : <span class="nu">0</span> }}
+          style={{ fontSize: <span class="nu">10</span>, color: <span class="st">'var(--mu)'</span> }}&gt;▾&lt;/motion.span&gt;
+      &lt;/div&gt;
+
+      <span class="cm">/* ── BODY (animated open/close) ── */</span>
+      &lt;AnimatePresence&gt;
+        {open &amp;&amp; (
+          &lt;motion.div
+            initial={{ height: <span class="nu">0</span>, opacity: <span class="nu">0</span> }}
+            animate={{ height: <span class="st">'auto'</span>, opacity: <span class="nu">1</span> }}
+            exit={{ height: <span class="nu">0</span>, opacity: <span class="nu">0</span> }}
+            style={{ overflow: <span class="st">'hidden'</span>, borderTop: <span class="st">'1px solid var(--bd)'</span> }}&gt;
+            &lt;div style={{ padding: <span class="st">'0 15px 15px'</span> }}&gt;
+
+              <span class="cm">/* Required docs — with vault status */</span>
+              {task.required_docs?.length &gt; <span class="nu">0</span> &amp;&amp; (
+                &lt;&gt;
+                  &lt;div style={{ fontSize: <span class="nu">10</span>, color: <span class="st">'var(--mu)'</span>, margin: <span class="st">'10px 0 6px'</span> }}&gt;
+                    Required documents:
+                  &lt;/div&gt;
+                  {task.required_docs.map(doc =&gt; {
+                    <span class="kw">const</span> hasIt = docStatus(doc.requirement_id)
+                    <span class="kw">return</span> (
+                      &lt;div key={doc.requirement_id}
+                        style={{ display: <span class="st">'flex'</span>, alignItems: <span class="st">'center'</span>, gap: <span class="nu">8</span>,
+                          padding: <span class="st">'6px 9px'</span>, borderRadius: <span class="nu">7</span>, marginBottom: <span class="nu">4</span>,
+                          background: hasIt ? <span class="st">'rgba(92,140,117,.07)'</span> : <span class="st">'rgba(212,124,63,.04)'</span>,
+                          border: hasIt ? <span class="st">'1px solid rgba(92,140,117,.25)'</span> : <span class="st">'1px solid rgba(212,124,63,.2)'</span>
+                        }}&gt;
+                        &lt;span style={{ fontSize: <span class="nu">12</span> }}&gt;{hasIt ? <span class="st">'📄'</span> : <span class="st">'⬜'</span>}&lt;/span&gt;
+                        &lt;span style={{ flex: <span class="nu">1</span>, fontSize: <span class="nu">11</span>, color: <span class="st">'rgba(255,255,255,.75)'</span> }}&gt;
+                          {doc.name}
+                        &lt;/span&gt;
+                        {hasIt
+                          ? &lt;VaultTag /&gt;   <span class="cm">/* green "from vault" pill */</span>
+                          : &lt;UploadBtn docId={doc.requirement_id} /&gt;  <span class="cm">/* amber "+ Upload" */</span>
+                        }
+                      &lt;/div&gt;
+                    )
+                  })}
+                &lt;/&gt;
+              )}
+
+              <span class="cm">/* ── TWO CTAs — guide + done ── */</span>
+              &lt;div style={{ display: <span class="st">'flex'</span>, gap: <span class="nu">8</span>, marginTop: <span class="nu">12</span> }}&gt;
+                &lt;button onClick={() =&gt; onGuide(task.id)}
+                  style={{ flex: <span class="nu">1</span>, padding: <span class="st">'10px 14px'</span>,
+                    background: <span class="st">'linear-gradient(135deg,rgba(212,124,63,.15),rgba(45,74,62,.3))'</span>,
+                    border: <span class="st">'1px solid rgba(212,124,63,.3)'</span>, borderRadius: <span class="nu">9</span>,
+                    fontSize: <span class="nu">12</span>, color: <span class="st">'var(--al)'</span>, cursor: <span class="st">'pointer'</span>,
+                    fontFamily: <span class="st">'DM Sans'</span>, display: <span class="st">'flex'</span>, alignItems: <span class="st">'center'</span>,
+                    justifyContent: <span class="st">'center'</span>, gap: <span class="nu">7</span> }}&gt;
+                  🗺 Guide me through this →
+                &lt;/button&gt;
+                &lt;button onClick={() =&gt; onDone(task.id)}
+                  style={{ padding: <span class="st">'10px 14px'</span>, background: <span class="st">'transparent'</span>,
+                    border: <span class="st">'1px solid var(--bd)'</span>, borderRadius: <span class="nu">9</span>,
+                    fontSize: <span class="nu">12</span>, color: <span class="st">'var(--mu)'</span>, cursor: <span class="st">'pointer'</span>,
+                    fontFamily: <span class="st">'DM Sans'</span>, whiteSpace: <span class="st">'nowrap'</span> }}&gt;
+                  ✓ Mark done
+                &lt;/button&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/motion.div&gt;
+        )}
+      &lt;/AnimatePresence&gt;
+    &lt;/motion.div&gt;
+  )
+}</pre></div>
+  </div>
+</div>
+
+<!-- ═══════ FIX 2: GUIDE ═══════ -->
+<div class="page" id="pg-fix-guide">
+  <div class="eyebrow red">Fix 2 — The big one</div>
+  <h1>"No guide yet" means<br><em>no data seeded</em></h1>
+  <p class="pgdesc">The guide panel UI exists but it shows "No guide yet" because there's no task_guide row for this task in the database. The fix is to seed the guide data. Here's exactly what needs to go in.</p>
+
+  <div class="ibox coral"><strong>Root cause:</strong> The UI does a <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px">GET /api/tasks/:id/guide</code> and gets a 404 or empty response. It falls back to "No guide yet". The fix is NOT in the frontend code — it's in the database. Seed <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px">task_guides</code> and the panel works automatically.</div>
+
+  <h2 style="margin-bottom:8px">What a guide must contain</h2>
+  <p style="font-size:13px;color:var(--mu);line-height:1.7;margin-bottom:16px">Based on Image 4 — the "Download your e-Aadhaar" guide — every task guide has these 5 components:</p>
+
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card2"><div style="color:var(--gold);font-size:12px;font-weight:500;margin-bottom:5px">① Prefilled fields banner</div><div style="font-size:11px;color:var(--mu)">PathFinder knows these — Aadhaar number, registered mobile, full name — shown prefilled with "from vault" / "from profile" source tags. User copies, doesn't type from memory.</div></div>
+    <div class="card2"><div style="color:var(--amber);font-size:12px;font-weight:500;margin-bottom:5px">② Step-by-step instructions</div><div style="font-size:11px;color:var(--mu)">3–5 numbered steps. Each has a title, description, and an optional action button (Open URL, Copy value, or nothing). Steps marked done/active/todo.</div></div>
+    <div class="card2"><div style="color:var(--sage);font-size:12px;font-weight:500;margin-bottom:5px">③ "What you'll get" box</div><div style="font-size:11px;color:var(--mu)">At the bottom — tells user exactly what file/outcome to expect. "A PDF named eaadhaar.pdf. Rename it Aadhaar_2026.pdf."</div></div>
+    <div class="card2"><div style="color:var(--lav);font-size:12px;font-weight:500;margin-bottom:5px">④ Completion CTA</div><div style="font-size:11px;color:var(--mu)">"✓ I completed this task" — big amber button at bottom. Closes sheet and ticks off the task.</div></div>
+  </div>
+</div>
+
+<!-- ═══════ FIX 2: CODE ═══════ -->
+<div class="page" id="pg-fix-guide-code">
+  <div class="eyebrow">Fix 2 — Database + seed data</div>
+  <h1>The <em>task_guides</em> schema</h1>
+
+  <div class="codeblock">
+    <div class="cb-head"><span class="cb-lang">SQL</span><span class="cb-file">migrations/003_task_guides.sql</span></div>
+    <div class="cb-body"><pre><span class="kw">CREATE TABLE</span> task_guides (
+  id           <span class="ty">UUID</span>    <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  task_type    <span class="ty">TEXT</span>    <span class="kw">UNIQUE NOT NULL</span>,  <span class="cm">-- e.g. 'download_aadhaar', 'submit_hr_docs'</span>
+  title        <span class="ty">TEXT</span>    <span class="kw">NOT NULL</span>,          <span class="cm">-- "Download your e-Aadhaar"</span>
+  est_minutes  <span class="ty">INTEGER</span>,                  <span class="cm">-- ~5 minutes</span>
+  website      <span class="ty">TEXT</span>,                     <span class="cm">-- "uidai.gov.in"</span>
+  steps        <span class="ty">JSONB</span>   <span class="kw">NOT NULL</span>,          <span class="cm">-- array of step objects</span>
+  prefill_keys <span class="ty">JSONB</span>,                    <span class="cm">-- which vault/profile fields to show</span>
+  result_items <span class="ty">JSONB</span>,                    <span class="cm">-- "what you'll get" bullets</span>
+  created_at   <span class="ty">TIMESTAMP DEFAULT</span> now()
+);
+
+<span class="cm">-- Link task_type to tasks in plans</span>
+<span class="kw">ALTER TABLE</span> tasks <span class="kw">ADD COLUMN</span> guide_type <span class="ty">TEXT REFERENCES</span> task_guides(task_type);</pre></div>
+  </div>
+
+  <div class="codeblock">
+    <div class="cb-head"><span class="cb-lang">SQL</span><span class="cb-file">seeds/task_guides_seed.sql — seed this NOW</span></div>
+    <div class="cb-body"><pre><span class="cm">-- SEED: Download e-Aadhaar (most common task)</span>
+<span class="kw">INSERT INTO</span> task_guides (task_type, title, est_minutes, website, prefill_keys, steps, result_items)
+<span class="kw">VALUES</span> (
+  <span class="st">'download_aadhaar'</span>,
+  <span class="st">'Download your e-Aadhaar'</span>,
+  <span class="nu">5</span>,
+  <span class="st">'uidai.gov.in'</span>,
+  <span class="st">'["aadhaar_number","registered_mobile","full_name"]'</span>,
+  <span class="st">'[
+    {
+      "num": 1,
+      "title": "Go to the official UIDAI page",
+      "desc": "Open myaadhaar.uidai.gov.in — make sure it is the .gov.in domain. Do not use third-party sites.",
+      "action": {"type": "link", "label": "Open UIDAI page →", "url": "https://myaadhaar.uidai.gov.in"}
+    },
+    {
+      "num": 2,
+      "title": "Enter your Aadhaar number",
+      "desc": "Enter the 12-digit number. Your Aadhaar number from your vault is shown above — just copy it in.",
+      "action": {"type": "copy", "label": "Copy number", "copy_field": "aadhaar_number"}
+    },
+    {
+      "num": 3,
+      "title": "Enter the OTP sent to your phone",
+      "desc": "An SMS will arrive on your registered mobile. Enter the 6-digit code. If you do not receive it within 2 minutes, click Resend OTP.",
+      "action": null
+    },
+    {
+      "num": 4,
+      "title": "Download the PDF and enter the password",
+      "desc": "Click Download Aadhaar. The PDF is password-protected. Password = first 4 letters of your name (uppercase) + birth year.",
+      "action": {"type": "copy", "label": "Copy password hint", "copy_field": "aadhaar_pdf_password"}
+    }
+  ]'</span>,
+  <span class="st">'[
+    "A PDF named eaadhaar.pdf will download. Open it with your password.",
+    "Rename it Aadhaar_2026.pdf and save to your Documents folder.",
+    "You will need this in Steps 3, 7, and 12 of this plan."
+  ]'</span>
+);
+
+<span class="cm">-- SEED: Submit documents to HR</span>
+<span class="kw">INSERT INTO</span> task_guides (task_type, title, est_minutes, website, prefill_keys, steps, result_items)
+<span class="kw">VALUES</span> (
+  <span class="st">'submit_hr_docs'</span>,
+  <span class="st">'Submit your documents to HR'</span>,
+  <span class="nu">15</span>,
+  <span class="st">'hr portal or email'</span>,
+  <span class="st">'["full_name","joining_date","employee_id"]'</span>,
+  <span class="st">'[
+    {
+      "num": 1,
+      "title": "Gather the required documents",
+      "desc": "You need: Aadhaar (from vault ✓), PAN card (from vault ✓), Offer letter, Degree certificate, and 3 salary slips.",
+      "action": null
+    },
+    {
+      "num": 2,
+      "title": "Check your offer letter for submission method",
+      "desc": "Some companies use an HR portal. Others ask for physical copies on Day 1. Check the last page of your offer letter.",
+      "action": null
+    },
+    {
+      "num": 3,
+      "title": "Submit or upload all documents",
+      "desc": "If via portal: upload each file. If physical: arrange them in a folder labelled with your name and joining date.",
+      "action": null
+    }
+  ]'</span>,
+  <span class="st">'[
+    "HR will initiate your BGV (background verification) after receiving documents.",
+    "BGV typically takes 5-7 business days with Infosys.",
+    "You will get an email confirmation once documents are received."
+  ]'</span>
+);
+
+<span class="cm">-- SEED: Open salary bank account</span>
+<span class="kw">INSERT INTO</span> task_guides (task_type, title, est_minutes, website, prefill_keys, steps, result_items)
+<span class="kw">VALUES</span> (
+  <span class="st">'open_salary_account'</span>,
+  <span class="st">'Open your salary bank account'</span>,
+  <span class="nu">20</span>,
+  <span class="st">'your employer bank</span><span class="st">'</span>,
+  <span class="st">'["full_name","aadhaar_number","office_address"]'</span>,
+  <span class="st">'[
+    {
+      "num": 1,
+      "title": "Find the nearest branch of your employer bank",
+      "desc": "Your offer letter specifies which bank. Branches near your office are recommended.",
+      "action": {"type": "link", "label": "Find nearest HDFC branch →", "url": "https://www.hdfc.bank.in/branch-locator"}
+    },
+    {
+      "num": 2,
+      "title": "Carry your Aadhaar and offer letter",
+      "desc": "These are the two mandatory documents for a salary account. Both are in your vault.",
+      "action": null
+    },
+    {
+      "num": 3,
+      "title": "Tell the bank it is a salary account for Infosys",
+      "desc": "They will have a corporate account opening process. It is usually faster than a regular account.",
+      "action": null
+    }
+  ]'</span>,
+  <span class="st">'[
+    "You will receive a welcome kit with your account number and debit card.",
+    "Link it to UPI and your Infosys HR portal for salary processing.",
+    "It takes 2-3 business days to activate."
+  ]'</span>
+);</pre></div>
+  </div>
+
+  <div class="codeblock">
+    <div class="cb-head"><span class="cb-lang">Python</span><span class="cb-file">api/guides.py — the guide endpoint</span></div>
+    <div class="cb-body"><pre><span class="kw">@router</span>.get(<span class="st">'/tasks/{task_id}/guide'</span>)
+<span class="kw">async def</span> <span class="fn">get_task_guide</span>(
+    task_id: str,
+    user: User = Depends(get_current_user)
+):
+    <span class="cm"># 1. Get the task's guide_type</span>
+    task = db.get(<span class="st">'tasks'</span>, task_id)
+    <span class="kw">if not</span> task[<span class="st">'guide_type'</span>]:
+        <span class="kw">raise</span> HTTPException(<span class="nu">404</span>, <span class="st">'No guide for this task'</span>)
+
+    <span class="cm"># 2. Get the guide</span>
+    guide = db.query(
+        <span class="st">"SELECT * FROM task_guides WHERE task_type = %s"</span>,
+        task[<span class="st">'guide_type'</span>]
+    )
+    <span class="kw">if not</span> guide:
+        <span class="kw">raise</span> HTTPException(<span class="nu">404</span>, <span class="st">'No guide for this task'</span>)
+
+    <span class="cm"># 3. Prefill fields from vault + profile</span>
+    prefill = {}
+    <span class="kw">for</span> key <span class="kw">in</span> (guide[<span class="st">'prefill_keys'</span>] <span class="kw">or</span> []):
+        <span class="cm"># Try vault first, then profile</span>
+        val = get_vault_field(user.id, key) <span class="kw">or</span> get_profile_field(user.id, key)
+        <span class="kw">if</span> val:
+            prefill[key] = {<span class="st">'value'</span>: val[<span class="st">'value'</span>], <span class="st">'source'</span>: val[<span class="st">'source'</span>]}
+
+    <span class="kw">return</span> {
+        <span class="st">'title'</span>: guide[<span class="st">'title'</span>],
+        <span class="st">'est_minutes'</span>: guide[<span class="st">'est_minutes'</span>],
+        <span class="st">'website'</span>: guide[<span class="st">'website'</span>],
+        <span class="st">'steps'</span>: guide[<span class="st">'steps'</span>],
+        <span class="st">'prefill'</span>: prefill,
+        <span class="st">'result_items'</span>: guide[<span class="st">'result_items'</span>]
+    }
+
+
+<span class="cm">"""
+ALSO UPDATE PLAN GENERATION:
+When the AI generates tasks for a plan, set guide_type on each task.
+Map like this:
+  - Any task about Aadhaar → guide_type = 'download_aadhaar'
+  - Any task about HR docs → guide_type = 'submit_hr_docs'
+  - Any task about bank account → guide_type = 'open_salary_account'
+
+Add this mapping in your plan generation prompt or post-processing:
+"""</span>
+
+GUIDE_MAPPING = {
+    <span class="st">'aadhaar'</span>: <span class="st">'download_aadhaar'</span>,
+    <span class="st">'pan card'</span>: <span class="st">'download_pan'</span>,
+    <span class="st">'submit.*hr'</span>: <span class="st">'submit_hr_docs'</span>,
+    <span class="st">'bank account'</span>: <span class="st">'open_salary_account'</span>,
+    <span class="st">'rental agreement'</span>: <span class="st">'sign_rental'</span>,
+    <span class="st">'police verification'</span>: <span class="st">'police_verification'</span>,
+}
+
+<span class="kw">import</span> re
+<span class="kw">def</span> <span class="fn">infer_guide_type</span>(task_title: str) -> str | None:
+    <span class="kw">for</span> pattern, guide_type <span class="kw">in</span> GUIDE_MAPPING.items():
+        <span class="kw">if</span> re.search(pattern, task_title.lower()):
+            <span class="kw">return</span> guide_type
+    <span class="kw">return None</span></pre></div>
+  </div>
+
+  <div class="ibox sage"><strong>Immediate fix checklist:</strong><br>
+  1. Run <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px">migrations/003_task_guides.sql</code> to create the table<br>
+  2. Run <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px">seeds/task_guides_seed.sql</code> to seed the 3 core guides<br>
+  3. Run <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px">UPDATE tasks SET guide_type = infer_guide_type(title)</code> to backfill existing tasks<br>
+  4. Test by clicking "Guide me" on "Handle documentation" — should show the Aadhaar guide, not "No guide yet"</div>
+</div>
+
+<!-- ═══════ FIX 3: VAULT INTEL ═══════ -->
+<div class="page" id="pg-fix-vault">
+  <div class="eyebrow">Fix 3 — Vault intelligence</div>
+  <h1>The vault <em>reads docs</em></h1>
+  <p class="pgdesc">Image 5 shows what happens when a user uploads an offer letter or Aadhaar — PathFinder reads it and shows what it extracted. This page doesn't exist yet in the implementation.</p>
+
+  <div class="ibox amber"><strong>This is the real differentiator.</strong> Storage is Google Drive. The value is that PathFinder reads the document, understands what it means for this specific plan, and acts on it automatically. When you upload an offer letter: joining date set, office location found, BGV requirements noted, address mismatch flagged.</div>
+
+  <h2 style="margin-bottom:14px">What the vault intelligence page shows (Image 5)</h2>
+
+  <!-- Mock of Image 5 UI -->
+  <div style="background:var(--fc);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:20px;margin-bottom:20px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:var(--mu);margin-bottom:6px">Vault Intelligence · Document Reading</div>
+    <div style="font-family:'Playfair Display',serif;font-weight:800;font-size:22px;color:white;margin-bottom:4px">The vault reads <em style="color:var(--al)">your docs</em></div>
+    <div style="font-size:12px;color:var(--mu);line-height:1.65;margin-bottom:18px">When you upload an offer letter or Aadhaar, PathFinder reads it and uses what it learns across your entire plan.</div>
+
+    <!-- Doc reading result card -->
+    <div style="background:var(--fc2);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <span style="font-size:18px">📑</span>
+        <div>
+          <div style="font-size:13px;font-weight:500;color:white">You uploaded your Offer Letter</div>
+          <div style="font-size:10px;color:var(--mu)">Offer_Letter_Infosys_Bangalore.pdf — PathFinder read it and found 4 things to do automatically</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:var(--fc);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start">
+          <span style="font-size:14px">📅</span>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:500;color:white;margin-bottom:2px">Joining date set — April 1, 2026</div>
+            <div style="font-size:10px;color:var(--mu);line-height:1.5">All 34 task deadlines have been calculated backwards from this date. Your plan now has real dates.</div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 7px;background:rgba(92,140,117,.12);border:1px solid rgba(92,140,117,.25);border-radius:3px;color:var(--sage);display:inline-block;margin-top:5px">✓ Applied to plan</span>
+          </div>
+        </div>
+        <div style="background:var(--fc);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start">
+          <span style="font-size:14px">⚠️</span>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:500;color:white;margin-bottom:2px">Address mismatch detected</div>
+            <div style="font-size:10px;color:var(--mu);line-height:1.5">Your Aadhaar shows Mumbai. Offer letter shows Bangalore posting. You'll need to update your Aadhaar address — flagged as priority task.</div>
+            <button style="font-size:10px;padding:3px 9px;background:rgba(212,124,63,.12);border:1px solid rgba(212,124,63,.25);border-radius:999px;color:var(--al);cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:5px">See Aadhaar update task →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card2"><div style="color:var(--sage);font-size:12px;font-weight:500;margin-bottom:5px">Offer letter extracts</div><div style="font-size:11px;color:var(--mu)">Joining date, office address, employer name, CTC — these update the whole plan automatically.</div></div>
+    <div class="card2"><div style="color:var(--amber);font-size:12px;font-weight:500;margin-bottom:5px">Aadhaar extracts</div><div style="font-size:11px;color:var(--mu)">Name, DOB, address, Aadhaar number — pre-fills every form in the plan. User never types these again.</div></div>
+    <div class="card2"><div style="color:var(--coral);font-size:12px;font-weight:500;margin-bottom:5px">Cross-doc checks</div><div style="font-size:11px;color:var(--mu)">Address mismatch between Aadhaar and offer letter. Passport expiry check. Salary proof date validation.</div></div>
+  </div>
+</div>
+
+<!-- ═══════ FIX 3: CODE ═══════ -->
+<div class="page" id="pg-fix-vault-code">
+  <div class="eyebrow">Fix 3 — Vault reading API</div>
+  <h1>Document <em>intelligence</em> code</h1>
+
+  <div class="ibox gold"><strong>PathFinder uses Gemini 2.0 Flash via the Google GenAI SDK</strong> for all document reading. The code below is written for that exact setup — same SDK you already have running for plan generation. Do not use Anthropic API here.</div>
+
+  <div class="codeblock">
+    <div class="cb-head"><span class="cb-lang">Python</span><span class="cb-file">api/vault_intelligence.py — Gemini 2.0 Flash document reading</span></div>
+    <div class="cb-body"><pre><span class="kw">import</span> json, base64
+<span class="kw">from</span> google <span class="kw">import</span> genai
+<span class="kw">from</span> google.genai <span class="kw">import</span> types
+
+<span class="cm"># Same client you already use for plan generation</span>
+client = genai.Client()
+MODEL = <span class="st">"gemini-2.0-flash"</span>
+
+
+<span class="kw">async def</span> <span class="fn">extract_document_intelligence</span>(
+    vault_doc_id: str, user_id: str, plan_id: str
+):
+    doc = db.get(<span class="st">'vault_documents'</span>, vault_doc_id)
+
+    <span class="cm"># Download the file from S3/storage</span>
+    doc_bytes = download_from_s3(doc[<span class="st">'storage_url'</span>])
+
+    <span class="cm"># Detect MIME type — Gemini handles PDF, JPG, PNG natively</span>
+    mime = <span class="fn">get_mime_type</span>(doc[<span class="st">'storage_url'</span>])  <span class="cm"># 'application/pdf' | 'image/jpeg' | 'image/png'</span>
+
+    <span class="cm"># Get plan context + user profile for mismatch detection</span>
+    plan = db.get(<span class="st">'plans'</span>, plan_id)
+    user_profile = db.get(<span class="st">'user_profiles'</span>, user_id)
+
+    prompt = <span class="st">f"""
+You are reading a {doc['doc_type']} document for a user whose plan is:
+{plan['description']}
+
+Current user profile for mismatch checks:
+{json.dumps(user_profile, indent=2)}
+
+Extract the following fields. Return null for any field not found in the document.
+
+FIELDS TO EXTRACT:
+- full_name
+- date_of_birth (ISO format YYYY-MM-DD)
+- address (complete address string)
+- aadhaar_number (mask middle 8 digits: XXXX XXXX 4821 format)
+- pan_number
+- joining_date (ISO format, for offer letters only)
+- office_address (for offer letters only)
+- employer_name (for offer letters only)
+- ctc_annual (numeric, INR, for offer letters only)
+- passport_expiry (ISO format, for passports only)
+
+FLAGS TO CHECK:
+- address_mismatch: if address in this document differs from profile address, describe the difference
+- passport_urgency: if passport expires within 12 months, set to true
+- employer_bgv_note: any BGV or background check requirements mentioned
+- any_other_flags: array of any other actionable findings
+
+Return ONLY a valid JSON object. No markdown, no explanation, no backticks.
+Example shape:
+{{
+  "full_name": "Sefin K R",
+  "joining_date": "2026-04-01",
+  "office_address": "Infosys, Koramangala, Bangalore",
+  "address_mismatch": "Document shows Mumbai address, profile shows Tirur Kerala",
+  "passport_urgency": false,
+  "employer_bgv_note": "Requires 3 years employment history",
+  "any_other_flags": []
+}}
+"""</span>
+
+    <span class="cm"># Send document + prompt to Gemini 2.0 Flash</span>
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=[
+            types.Part.from_bytes(
+                data=doc_bytes,
+                mime_type=mime,
+            ),
+            prompt,
+        ],
+        config=types.GenerateContentConfig(
+            temperature=<span class="nu">0.0</span>,     <span class="cm"># deterministic for extraction</span>
+            max_output_tokens=<span class="nu">2000</span>,
+        )
+    )
+
+    <span class="cm"># Parse the JSON response</span>
+    raw = response.text.strip()
+    <span class="kw">try</span>:
+        extracted = json.loads(raw)
+    <span class="kw">except</span> json.JSONDecodeError:
+        <span class="cm"># Gemini occasionally wraps in ```json — strip it</span>
+        clean = raw.replace(<span class="st">'```json'</span>, <span class="st">''</span>).replace(<span class="st">'```'</span>, <span class="st">''</span>).strip()
+        extracted = json.loads(clean)
+
+    <span class="cm"># Persist extracted fields</span>
+    db.insert(<span class="st">'vault_extractions'</span>, {
+        <span class="st">'vault_doc_id'</span>: vault_doc_id,
+        <span class="st">'user_id'</span>: user_id,
+        <span class="st">'extracted_fields'</span>: json.dumps(extracted),
+        <span class="st">'flags'</span>: json.dumps(extracted.get(<span class="st">'any_other_flags'</span>, []))
+    })
+
+    <span class="cm"># Auto-apply to plan and collect action cards for UI</span>
+    actions = apply_to_plan(extracted, plan_id, user_id)
+
+    <span class="kw">return</span> {
+        <span class="st">'extracted'</span>: extracted,
+        <span class="st">'actions_taken'</span>: actions,   <span class="cm"># rendered as action cards in vault intel UI</span>
+        <span class="st">'flags'</span>: [
+            extracted.get(<span class="st">'address_mismatch'</span>),
+            extracted.get(<span class="st">'employer_bgv_note'</span>),
+        ]
+    }
+
+
+<span class="kw">def</span> <span class="fn">apply_to_plan</span>(extracted: dict, plan_id: str, user_id: str) -> list:
+    actions = []
+
+    <span class="kw">if</span> extracted.get(<span class="st">'joining_date'</span>):
+        recalculate_task_dates(plan_id, extracted[<span class="st">'joining_date'</span>])
+        actions.append({
+            <span class="st">'type'</span>: <span class="st">'dates_updated'</span>,
+            <span class="st">'icon'</span>: <span class="st">'📅'</span>,
+            <span class="st">'label'</span>: <span class="st">f"Joining date set — {extracted['joining_date']}"</span>,
+            <span class="st">'detail'</span>: <span class="st">'All task deadlines recalculated from this date'</span>,
+            <span class="st">'badge'</span>: <span class="st">'Applied to plan'</span>
+        })
+
+    <span class="kw">if</span> extracted.get(<span class="st">'office_address'</span>):
+        update_location_context(plan_id, extracted[<span class="st">'office_address'</span>])
+        actions.append({
+            <span class="st">'type'</span>: <span class="st">'location_updated'</span>,
+            <span class="st">'icon'</span>: <span class="st">'🏢'</span>,
+            <span class="st">'label'</span>: <span class="st">f"Office location — {extracted['office_address']}"</span>,
+            <span class="st">'detail'</span>: <span class="st">'Bank and housing suggestions updated to 3–5km radius'</span>,
+            <span class="st">'badge'</span>: <span class="st">'Applied to plan'</span>
+        })
+
+    <span class="kw">if</span> extracted.get(<span class="st">'employer_bgv_note'</span>):
+        actions.append({
+            <span class="st">'type'</span>: <span class="st">'bgv_note'</span>,
+            <span class="st">'icon'</span>: <span class="st">'⚠️'</span>,
+            <span class="st">'label'</span>: <span class="st">'Employer-specific BGV note'</span>,
+            <span class="st">'detail'</span>: extracted[<span class="st">'employer_bgv_note'</span>],
+            <span class="st">'badge'</span>: <span class="kw">None</span>,
+            <span class="st">'cta'</span>: <span class="st">'View updated tasks →'</span>
+        })
+
+    <span class="kw">if</span> extracted.get(<span class="st">'address_mismatch'</span>):
+        flag_task_priority(plan_id, <span class="st">'update_aadhaar_address'</span>)
+        actions.append({
+            <span class="st">'type'</span>: <span class="st">'flag'</span>,
+            <span class="st">'icon'</span>: <span class="st">'🪪'</span>,
+            <span class="st">'label'</span>: <span class="st">'Address mismatch detected'</span>,
+            <span class="st">'detail'</span>: extracted[<span class="st">'address_mismatch'</span>],
+            <span class="st">'badge'</span>: <span class="kw">None</span>,
+            <span class="st">'cta'</span>: <span class="st">'See Aadhaar update task →'</span>
+        })
+
+    <span class="kw">if</span> extracted.get(<span class="st">'passport_urgency'</span>):
+        flag_task_priority(plan_id, <span class="st">'renew_passport'</span>)
+        actions.append({
+            <span class="st">'type'</span>: <span class="st">'flag'</span>,
+            <span class="st">'icon'</span>: <span class="st">'📘'</span>,
+            <span class="st">'label'</span>: <span class="st">'Passport expiring within 12 months'</span>,
+            <span class="st">'detail'</span>: <span class="st">'Some employers require 1 year validity. Passport task moved to Week 1.'</span>,
+            <span class="st">'cta'</span>: <span class="st">'Review passport task →'</span>
+        })
+
+    <span class="kw">return</span> actions
+
+
+<span class="kw">def</span> <span class="fn">get_mime_type</span>(url: str) -> str:
+    <span class="st">"""Infer MIME type from file extension in the storage URL."""</span>
+    url_lower = url.lower()
+    <span class="kw">if</span> url_lower.endswith(<span class="st">'.pdf'</span>):  <span class="kw">return</span> <span class="st">'application/pdf'</span>
+    <span class="kw">if</span> url_lower.endswith(<span class="st">'.png'</span>):  <span class="kw">return</span> <span class="st">'image/png'</span>
+    <span class="kw">if</span> url_lower.endswith((<span class="st">'.jpg'</span>, <span class="st">'.jpeg'</span>)):  <span class="kw">return</span> <span class="st">'image/jpeg'</span>
+    <span class="kw">return</span> <span class="st">'application/pdf'</span>  <span class="cm"># safe default</span></pre></div>
+  </div>
+
+  <div class="codeblock">
+    <div class="cb-head"><span class="cb-lang">Python</span><span class="cb-file">api/vault.py — wire intelligence into upload endpoint</span></div>
+    <div class="cb-body"><pre><span class="kw">from</span> fastapi <span class="kw">import</span> BackgroundTasks
+
+<span class="kw">@router</span>.post(<span class="st">'/vault/upload'</span>)
+<span class="kw">async def</span> <span class="fn">upload_document</span>(
+    file: UploadFile,
+    plan_id: str,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(get_current_user)
+):
+    <span class="cm"># 1. Upload to S3</span>
+    key = <span class="st">f"vault/{user.id}/{uuid4()}/{file.filename}"</span>
+    doc_bytes = <span class="kw">await</span> file.read()
+    s3.put_object(Bucket=BUCKET, Key=key, Body=doc_bytes)
+    url = <span class="st">f"https://{BUCKET}.s3.amazonaws.com/{key}"</span>
+
+    <span class="cm"># 2. Create vault_document record</span>
+    doc_id = db.insert(<span class="st">'vault_documents'</span>, {
+        <span class="st">'user_id'</span>: user.id, <span class="st">'name'</span>: file.filename,
+        <span class="st">'doc_type'</span>: infer_doc_type(file.filename),
+        <span class="st">'storage_url'</span>: url, <span class="st">'size_bytes'</span>: len(doc_bytes)
+    })
+
+    <span class="cm"># 3. Run Gemini extraction in BACKGROUND — don't block the response</span>
+    background_tasks.add_task(
+        extract_document_intelligence,
+        vault_doc_id=doc_id,
+        user_id=user.id,
+        plan_id=plan_id
+    )
+
+    <span class="cm"># 4. Return immediately — frontend polls /vault/:id/intelligence</span>
+    <span class="kw">return</span> {
+        <span class="st">'id'</span>: doc_id,
+        <span class="st">'status'</span>: <span class="st">'uploaded'</span>,
+        <span class="st">'intelligence_status'</span>: <span class="st">'processing'</span>  <span class="cm"># frontend shows spinner</span>
+    }
+
+
+<span class="kw">@router</span>.get(<span class="st">'/vault/{doc_id}/intelligence'</span>)
+<span class="kw">async def</span> <span class="fn">get_doc_intelligence</span>(doc_id: str, user=Depends(get_current_user)):
+    <span class="cm"># Frontend polls this after upload to get the extracted actions</span>
+    extraction = db.query(
+        <span class="st">"SELECT * FROM vault_extractions WHERE vault_doc_id = %s AND user_id = %s"</span>,
+        doc_id, user.id
+    )
+    <span class="kw">if not</span> extraction:
+        <span class="kw">return</span> {<span class="st">'status'</span>: <span class="st">'processing'</span>}  <span class="cm"># still running</span>
+
+    <span class="kw">return</span> {
+        <span class="st">'status'</span>: <span class="st">'complete'</span>,
+        <span class="st">'extracted'</span>: json.loads(extraction[<span class="st">'extracted_fields'</span>]),
+        <span class="st">'actions_taken'</span>: json.loads(extraction.get(<span class="st">'actions_taken'</span>, <span class="st">'[]'</span>))
+    }</pre></div>
+  </div>
+
+  <div class="codeblock">
+    <div class="cb-head"><span class="cb-lang">JSX</span><span class="cb-file">Frontend polling — show spinner then intelligence panel</span></div>
+    <div class="cb-body"><pre><span class="cm">// After upload completes, poll until intelligence is ready</span>
+<span class="kw">async function</span> <span class="fn">pollIntelligence</span>(docId, onReady) {
+  <span class="kw">const</span> poll = <span class="kw">async</span> () => {
+    <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="st">`/api/vault/${docId}/intelligence`</span>)
+    <span class="kw">const</span> data = <span class="kw">await</span> res.json()
+
+    <span class="kw">if</span> (data.status === <span class="st">'complete'</span>) {
+      onReady(data)  <span class="cm">// render the action cards</span>
+    } <span class="kw">else</span> {
+      setTimeout(poll, <span class="nu">2000</span>)  <span class="cm">// retry every 2s</span>
+    }
+  }
+  poll()
+}
+
+<span class="cm">// Usage after upload:</span>
+<span class="kw">const</span> { id: docId } = <span class="kw">await</span> uploadDocument(file)
+setStatus(<span class="st">'PathFinder is reading this document...'</span>)  <span class="cm">// show spinner</span>
+pollIntelligence(docId, (data) => {
+  setStatus(<span class="kw">null</span>)
+  setActionCards(data.actions_taken)  <span class="cm">// renders the vault intel cards</span>
+})</pre></div>
+  </div>
+
+  <div class="ibox sage"><strong>Key points for Antigravity:</strong> (1) Use <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px">types.Part.from_bytes(data=doc_bytes, mime_type=mime)</code> — Gemini 2.0 Flash reads PDFs and images natively, no conversion needed. (2) Set <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px">temperature=0.0</code> for extraction — you want deterministic JSON, not creative output. (3) Always run as a <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px">background_task</code> — Gemini takes 2–5 seconds on a PDF and you never want to block the upload response.</div>
+</div>
+
+</main>
+</div><!-- /shell -->
+
+<!-- ═══════ GUIDE SHEET OVERLAY ═══════ -->
+<div class="overlay" id="guideOverlay" onclick="closeOverlay(event)">
+  <div class="sheet" id="guideSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr" id="sheetHdr">
+      <button class="sheet-close" onclick="closeGuide()">✕</button>
+    </div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<script>
+// ── PAGE ROUTING ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+  const pg = document.getElementById('pg-' + id);
+  if (pg) pg.classList.add('show');
+}
+function setAct(el) {
+  document.querySelectorAll('.sb-a').forEach(a => a.classList.remove('act'));
+  el.classList.add('act');
+}
+document.querySelectorAll('.sb-a').forEach(a => {
+  a.addEventListener('click', function() { setAct(this); });
+});
+
+// ── TASK CARD TOGGLE ──
+function toggleTC(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+// ── GUIDE DATA ──
+const GUIDES = {
+  aadhaar: {
+    tag: 'GUIDE ME THROUGH THIS',
+    title: 'Download your e-Aadhaar',
+    time: '~5 minutes',
+    site: 'uidai.gov.in',
+    prefill: [
+      { lbl: 'Aadhaar number', val: 'XXXX XXXX 4821', src: 'vault' },
+      { lbl: 'Registered mobile', val: '+91 98XXX XXXXX', src: 'profile' },
+      { lbl: 'Full name', val: 'Sefin K R', src: 'vault' },
+    ],
+    steps: [
+      { num: 1, state: 'done', title: 'Go to the official UIDAI page', desc: 'Open myaadhaar.uidai.gov.in — make sure it\'s the .gov.in domain. Don\'t use third-party sites.', action: { type: 'link', label: 'Open UIDAI page →', url: 'https://myaadhaar.uidai.gov.in' } },
+      { num: 2, state: 'active', title: 'Enter your Aadhaar number', desc: 'Enter the 12-digit number below. Your Aadhaar number from your vault is shown above — just copy it in.', action: { type: 'copy', label: 'Copy number' } },
+      { num: 3, state: 'todo', title: 'Enter the OTP sent to your phone', desc: 'An SMS will arrive on your registered mobile. Enter the 6-digit code. If you don\'t receive it within 2 minutes, click "Resend OTP".', action: null },
+      { num: 4, state: 'todo', title: 'Download the PDF and enter the password', desc: 'Click "Download Aadhaar". The PDF is password-protected. Password = first 4 letters of your name (uppercase) + birth year. For Sefin born 1995: SEFI1995', action: { type: 'copy', label: 'Copy password hint' } },
+    ],
+    result: [
+      'A PDF named eaadhaar.pdf will download. It opens with your password.',
+      'Rename it Aadhaar_2026.pdf and save to your Documents folder.',
+      'You\'ll need this in Steps 3, 7, and 12 of this plan.',
+    ]
+  },
+  hr: {
+    tag: 'GUIDE ME THROUGH THIS',
+    title: 'Submit your documents to HR',
+    time: '~15 minutes',
+    site: 'HR portal or email',
+    prefill: [
+      { lbl: 'Full name', val: 'Sefin K R', src: 'vault' },
+      { lbl: 'Joining date', val: 'April 1, 2026', src: 'vault' },
+    ],
+    steps: [
+      { num: 1, state: 'active', title: 'Gather the required documents', desc: 'You need: Aadhaar ✓, PAN ✓, Offer letter, Degree certificate, and 3 salary slips.', action: null },
+      { num: 2, state: 'todo', title: 'Check your offer letter for submission method', desc: 'Some companies use an HR portal. Others ask for physical copies on Day 1. Check the last page of your offer letter.', action: null },
+      { num: 3, state: 'todo', title: 'Submit or upload all documents', desc: 'If via portal: upload each file. If physical: arrange them in a folder labelled with your name and joining date.', action: null },
+    ],
+    result: [
+      'HR will initiate your BGV (background verification) after receiving documents.',
+      'BGV with Infosys typically takes 5–7 business days.',
+      'You\'ll get an email confirmation once documents are received.',
+    ]
+  },
+  bank: {
+    tag: 'GUIDE ME THROUGH THIS',
+    title: 'Open your salary bank account',
+    time: '~20 minutes',
+    site: 'Your employer bank',
+    prefill: [
+      { lbl: 'Full name', val: 'Sefin K R', src: 'vault' },
+      { lbl: 'Aadhaar number', val: 'XXXX XXXX 4821', src: 'vault' },
+    ],
+    steps: [
+      { num: 1, state: 'active', title: 'Find the nearest branch of your employer bank', desc: 'Your offer letter specifies which bank. Branches near your office are recommended.', action: { type: 'link', label: 'Find nearest HDFC branch →', url: 'https://www.hdfc.bank.in/branch-locator' } },
+      { num: 2, state: 'todo', title: 'Carry your Aadhaar and offer letter', desc: 'These are the two mandatory documents for a salary account. Both are in your vault.', action: null },
+      { num: 3, state: 'todo', title: 'Tell the bank it\'s a salary account for Infosys', desc: 'They have a corporate account opening process — usually faster than a regular account.', action: null },
+    ],
+    result: [
+      'You\'ll receive a welcome kit with your account number and debit card.',
+      'Link it to UPI and the Infosys HR portal for salary processing.',
+      'Takes 2–3 business days to activate.',
+    ]
+  }
+};
+
+function openGuide(key) {
+  const g = GUIDES[key];
+  if (!g) return;
+
+  document.getElementById('sheetHdr').innerHTML = `
+    <button class="sheet-close" onclick="closeGuide()">✕</button>
+    <div class="sheet-tag">${g.tag}</div>
+    <div class="sheet-title">${g.title}</div>
+    <div class="sheet-meta">
+      <span class="sheet-time">~${g.time}</span>
+      <span class="sheet-site">${g.site}</span>
+    </div>`;
+
+  let html = '';
+
+  // Prefill banner
+  if (g.prefill.length) {
+    html += `<div class="prefill-banner">
+      <div class="pb-head"><span class="pb-star">★</span><span class="pb-title">PathFinder knows these — no need to look them up</span></div>
+      <div class="pb-subtitle">Details from your vault and profile, pre-filled for this task.</div>
+      <div class="pb-fields">
+        ${g.prefill.map(f => `
+          <div class="pb-field">
+            <span class="pb-flbl">${f.lbl}</span>
+            <span class="pb-fval">${f.val}</span>
+            <span class="pb-fsrc ${f.src}">${f.src === 'vault' ? 'from vault' : 'from profile'}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Steps
+  html += `<div class="steps-wrap">`;
+  g.steps.forEach(s => {
+    const act = s.action ? (s.action.type === 'link'
+      ? `<button class="sact link" onclick="window.open('${s.action.url||'#'}')">↗ ${s.action.label}</button>`
+      : `<button class="sact copy" onclick="this.textContent='Copied!'">📋 ${s.action.label}</button>`) : '';
+    html += `<div class="step">
+      <div class="step-num ${s.state}">${s.state === 'done' ? '✓' : s.num}</div>
+      <div>
+        <div class="step-title">${s.title}</div>
+        <div class="step-desc">${s.desc}</div>
+        ${act ? `<div class="step-actions">${act}</div>` : ''}
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Result
+  html += `<div class="result-box">
+    <div class="rb-lbl">What you'll get when done</div>
+    <div class="rb-items">${g.result.map(r => `<div class="rb-item">${r}</div>`).join('')}</div>
+  </div>`;
+
+  // CTA
+  html += `<div class="sheet-cta">
+    <button class="sheet-cta-btn" onclick="completeTask()">✓ I completed this task</button>
+  </div>`;
+
+  document.getElementById('sheetBody').innerHTML = html;
+  document.getElementById('guideOverlay').classList.add('open');
+}
+
+function closeGuide() { document.getElementById('guideOverlay').classList.remove('open'); }
+function closeOverlay(e) { if (e.target === document.getElementById('guideOverlay')) closeGuide(); }
+function completeTask() { closeGuide(); document.querySelector('.tc-cb').classList.add('done'); }
+</script>
+</body>
+</html>

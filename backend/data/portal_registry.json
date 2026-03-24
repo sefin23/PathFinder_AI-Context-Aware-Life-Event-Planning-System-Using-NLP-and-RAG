@@ -1,0 +1,374 @@
+{
+  "version": "2026-03-15",
+  "meta": {
+    "description": "Portal registry for Pathfinder: state portals, URN patterns, prerequisites, and timeline buffers",
+    "default_timeline_days": {
+      "short": 7,
+      "medium": 21,
+      "long": 45
+    }
+  },
+
+  "urn_patterns": {
+    "aadhaar_update": {
+      "label_keywords": ["URN", "Update Request Number"],
+      "regex": "\\b\\d{4}/\\d{5}/\\d{5}\\b",
+      "source": "UIDAI update slips and PDFs"
+    },
+    "pan_application": {
+      "label_keywords": ["Acknowledgement Number", "15 digit acknowledgement"],
+      "regex": "\\b\\d{15}\\b",
+      "source": "NSDL/Protean PAN acknowledgement receipts"
+    },
+    "epfo_claim": {
+      "label_keywords": ["Claim Reference Number", "Tracking ID", "PF Claim ID"],
+      "regex": "\\b[A-Z0-9/\\-]{10,30}\\b",
+      "source": "EPFO claim/transfer receipts"
+    },
+    "generic_portal_ref": {
+      "label_keywords": ["Reference No", "Application No", "Reference ID"],
+      "regex": "\\b[A-Z0-9\\-]{8,20}\\b",
+      "source": "State e-district / seva receipts"
+    }
+  },
+
+  "timeline_buffers": {
+    "aadhaar_update": {
+      "first_followup_days": 7,
+      "second_followup_days": 14
+    },
+    "pan_change": {
+      "first_followup_days": 10,
+      "second_followup_days": 20
+    },
+    "voter_address_change": {
+      "first_followup_days": 21,
+      "second_followup_days": 35
+    },
+    "dl_address_change": {
+      "first_followup_days": 21,
+      "second_followup_days": 45
+    },
+    "epf_transfer": {
+      "first_followup_days": 10,
+      "second_followup_days": 21
+    },
+    "domicile_certificate": {
+      "first_followup_days": 14,
+      "second_followup_days": 30
+    }
+  },
+
+  "prerequisite_tags": {
+    "id_proof_standard": ["aadhaar", "pan", "voter_id", "passport", "driving_licence"],
+    "address_proof_standard": ["ration_card", "electricity_bill", "water_bill", "property_tax_receipt", "rent_agreement"],
+    "education_records_long_stay": ["school_leaving_certificate", "ssc_hsc_marksheets", "college_tc"],
+    "domicile_affidavit": ["notarized_affidavit_domicile_period"],
+    "employment_proof": ["offer_letter", "salary_slip", "form16"],
+    "vehicle_relocation": ["rc_book", "insurance", "puc", "loan_noc_if_hypothecated"],
+    "offline_rent_ka_mh": ["stamp_vendor_visit", "printed_rent_agreement"]
+  },
+
+  "states": {
+    "KA": {
+      "name": "Karnataka",
+      "pattern": "unified_seva",
+      "job_cities": ["Bengaluru", "Mysuru", "Mangalore", "Hubballi", "Belagavi"],
+      "portals": {
+        "seva_primary": {
+          "name": "Seva Sindhu",
+          "type": "unified_services",
+          "url_home": "https://sevasindhu.karnataka.gov.in/",
+          "url_services": "https://sevasindhuservices.karnataka.gov.in/",
+          "urn_pattern_key": "generic_portal_ref"
+        },
+        "vehicle_parivahan": {
+          "name": "Parivahan Vehicle Services",
+          "type": "central_transport",
+          "url_home": "https://parivahan.gov.in/",
+          "urn_pattern_key": "generic_portal_ref"
+        }
+      },
+      "domicile": {
+        "via_portal": "Seva Sindhu",
+        "prerequisites": [
+          "id_proof_standard",
+          "address_proof_standard",
+          "domicile_affidavit",
+          "education_records_long_stay"
+        ],
+        "notes": "Often asks for domicile/self-declaration affidavit and, for students, school/college certificates to prove stay in Karnataka.",
+        "timeline_key": "domicile_certificate"
+      },
+      "rent": {
+        "online_primary": {
+          "name": "Kaveri Online Services",
+          "url": "https://kaverionline.karnataka.gov.in",
+          "notes": "Use for e-stamping and some registrations; user logs in, selects document type (leave & licence / rent), pays stamp duty online."
+        },
+        "offline_fallback": {
+          "enabled": true,
+          "prerequisites": ["offline_rent_ka_mh"],
+          "notes": "If landlord insists on offline, visit a registered stamp vendor/document writer in areas like Koramangala/HSR. They will print a rent agreement on ₹100+ stamp paper in ~10–15 minutes."
+        }
+      }
+    },
+
+    "MH": {
+      "name": "Maharashtra",
+      "pattern": "unified_e_district_hybrid",
+      "job_cities": ["Mumbai", "Pune", "Nashik", "Nagpur"],
+      "portals": {
+        "aaple_sarkar": {
+          "name": "Aaple Sarkar",
+          "type": "citizen_services",
+          "url_home": "https://aaplesarkar.mahaonline.gov.in/en",
+          "url_register": "https://aaplesarkar.mahaonline.gov.in/en/Registration/Register",
+          "url_services": "https://aaplesarkar.mahaonline.gov.in/en/CommonForm/ViewAllServices",
+          "urn_pattern_key": "generic_portal_ref"
+        }
+      },
+      "domicile": {
+        "via_portal": "Aaple Sarkar",
+        "prerequisites": [
+          "id_proof_standard",
+          "address_proof_standard",
+          "education_records_long_stay",
+          "employment_proof"
+        ],
+        "notes": "Beyond Aadhaar/PAN, often expects proof of long-term stay such as school certificates, property records, or employment documents.",
+        "timeline_key": "domicile_certificate"
+      },
+      "rent": {
+        "online_primary": {
+          "name": "IGR Maharashtra – e-Registration (Leave & License)",
+          "url": "https://efilingigr.maharashtra.gov.in/ereg/",
+          "notes": "Use for online Leave & License registration in cities like Pune/Mumbai; requires log-in, party details, property details, biometrics when applicable."
+        },
+        "offline_fallback": {
+          "enabled": true,
+          "prerequisites": ["offline_rent_ka_mh"],
+          "notes": "Many smaller rentals still use physical stamp paper via local deed writers/stamp vendors; state law recognises e-registration as the preferred route."
+        }
+      }
+    },
+
+    "KL": {
+      "name": "Kerala",
+      "pattern": "e_district_plus_cscenters",
+      "job_cities": ["Kochi", "Thiruvananthapuram", "Kozhikode"],
+      "portals": {
+        "edistrict": {
+          "name": "eDistrict Kerala",
+          "type": "e_district",
+          "url_home": "https://edistrict.kerala.gov.in",
+          "urn_pattern_key": "generic_portal_ref"
+        },
+        "akshaya": {
+          "name": "Akshaya Centres",
+          "type": "assisted_application",
+          "url_info": "https://www.citizennest.com/guide/kerala-edistrict-certificate"
+        }
+      },
+      "domicile": {
+        "via_portal": "eDistrict Kerala / Akshaya",
+        "prerequisites": [
+          "id_proof_standard",
+          "address_proof_standard",
+          "education_records_long_stay"
+        ],
+        "notes": "Applications can be filed online via eDistrict or through Akshaya centres, which submit on behalf of the citizen.",
+        "timeline_key": "domicile_certificate"
+      }
+    },
+
+    "UP": {
+      "name": "Uttar Pradesh",
+      "pattern": "e_district",
+      "job_cities": ["Noida", "Lucknow", "Ghaziabad"],
+      "portals": {
+        "edistrict": {
+          "name": "eDistrict UP",
+          "type": "e_district",
+          "url_home": "http://edistrict.up.gov.in",
+          "urn_pattern_key": "generic_portal_ref"
+        },
+        "janhit": {
+          "name": "Janhit Guarantee Services List",
+          "type": "services_list",
+          "url_home": "https://upcmo.up.nic.in/janhit.htm"
+        }
+      },
+      "domicile": {
+        "via_portal": "eDistrict UP",
+        "prerequisites": [
+          "id_proof_standard",
+          "address_proof_standard",
+          "education_records_long_stay"
+        ],
+        "notes": "May additionally require school certificates or enquiry/verification reports from local authorities to prove long-term residence.",
+        "timeline_key": "domicile_certificate"
+      }
+    },
+
+    "HR": {
+      "name": "Haryana",
+      "pattern": "unified_seva",
+      "job_cities": ["Gurgaon", "Gurugram"],
+      "portals": {
+        "antyodaya_saral": {
+          "name": "Antyodaya SARAL Haryana",
+          "type": "unified_services",
+          "url_home": "https://saralharyana.gov.in",
+          "url_info_gurugram": "https://gurugram.gov.in/service/antyodaya-saral/",
+          "urn_pattern_key": "generic_portal_ref"
+        }
+      }
+    },
+
+    "TN": {
+      "name": "Tamil Nadu",
+      "pattern": "e_district_plus_cscenters",
+      "job_cities": ["Chennai", "Coimbatore", "Madurai"],
+      "portals": {
+        "tnega_esevai": {
+          "name": "TNeGA e-Sevai",
+          "type": "e_district",
+          "url_info": "https://services.india.gov.in/service/detail/tamil-nadu-e-sevai-portal-tnega",
+          "url_config": "https://serviceonline.gov.in/configuretn",
+          "urn_pattern_key": "generic_portal_ref"
+        }
+      }
+    },
+    "DL": {
+      "name": "Delhi",
+      "pattern": "e_district",
+      "job_cities": ["Delhi", "New Delhi"],
+      "portals": {
+        "edistrict": {
+          "name": "e-District Delhi",
+          "type": "e_district",
+          "url_home": "https://edistrict.delhigovt.nic.in/",
+          "urn_pattern_key": "generic_portal_ref"
+        }
+      },
+      "domicile": {
+        "via_portal": "e-District Delhi",
+        "prerequisites": [
+          "id_proof_standard",
+          "address_proof_standard",
+          "education_records_long_stay"
+        ],
+        "notes": "Delhi domicile often requires 3+ years of residence proof. Rent agreements and school records are key.",
+        "timeline_key": "domicile_certificate"
+      }
+    }
+  },
+
+  "national": {
+    "identity_portals": {
+      "aadhaar": {
+        "uidai_home": "https://uidai.gov.in",
+        "get_aadhaar_info": "https://uidai.gov.in/en/my-aadhaar/get-aadhaar.html",
+        "downloads": "https://uidai.gov.in/en/my-aadhaar/downloads.html",
+        "urn_pattern_key": "aadhaar_update",
+        "timeline_key": "aadhaar_update"
+      },
+      "pan": {
+        "protean_pan": "https://www.proteantech.in/services/pan/",
+        "urn_pattern_key": "pan_application",
+        "timeline_key": "pan_change"
+      },
+      "epfo": {
+        "member_portal": "https://unifiedportal-emp.epfindia.gov.in/epfo/",
+        "which_claim_form": "https://www.epfindia.gov.in/site_en/WhichClaimForm.php",
+        "form13_pdf": "https://www.epfindia.gov.in/site_docs/PDFs/Downloads_PDFs/Form13.pdf",
+        "timeline_key": "epf_transfer",
+        "urn_pattern_key": "epfo_claim",
+        "regional_offices": {
+          "mh": {
+            "name": "EPFO Regional Office - Mumbai",
+            "url": "https://www.epfindia.gov.in/site_en/Regional_Offices.php?id=mumbai",
+            "address": "EPFO Regional Office, 3rd Floor, ICICI Bank Towers, Bandra-Kurla Complex, Mumbai - 400051",
+            "phone": "022-26528941"
+          },
+          "ka": {
+            "name": "EPFO Regional Office - Bangalore",
+            "url": "https://www.epfindia.gov.in/site_en/Regional_Offices.php?id=bangalore",
+            "address": "EPFO Regional Office, Kendriya Sadan Annexe Building, Koramangala, Bengaluru - 560034",
+            "phone": "080-25537538"
+          },
+          "tn": {
+            "name": "EPFO Regional Office - Chennai",
+            "url": "https://www.epfindia.gov.in/site_en/Regional_Offices.php?id=chennai",
+            "address": "EPFO Regional Office, EVK Sampath Building, DPI Campus, Chennai - 600006",
+            "phone": "044-28524461"
+          },
+          "dl": {
+            "name": "EPFO Regional Office - Delhi",
+            "url": "https://www.epfindia.gov.in/site_en/Regional_Offices.php?id=delhi",
+            "address": "EPFO Regional Office, Bhavishya Nidhi Bhawan, 14 Bhikaji Cama Place, New Delhi - 110066",
+            "phone": "011-26178620"
+          },
+          "hr": {
+            "name": "EPFO Sub-Regional Office - Gurugram",
+            "url": "https://www.epfindia.gov.in/site_en/Regional_Offices.php?id=delhi",
+            "address": "EPFO Sub-Regional Office, SCO 57-58, Sector 9, Gurugram - 122001",
+            "phone": "0124-2324890"
+          }
+        }
+      },
+      "esic": {
+        "employer_portal": "https://www.esic.gov.in/",
+        "employer_registration": "https://www.esic.gov.in/employer/",
+        "benefits_portal": "https://www.esic.gov.in/insuredperson/",
+        "regional_offices": {
+          "mh": {
+            "name": "ESIC Regional Office - Mumbai",
+            "url": "https://www.esic.gov.in/about-esic/regional-offices",
+            "address": "ESI Scheme, Parel, Mumbai - 400012",
+            "phone": "022-24165496"
+          },
+          "ka": {
+            "name": "ESIC Regional Office - Bangalore",
+            "url": "https://www.esic.gov.in/about-esic/regional-offices",
+            "address": "ESI Regional Office, Indiranagar, Bengaluru - 560038",
+            "phone": "080-25212636"
+          },
+          "tn": {
+            "name": "ESIC Regional Office - Chennai",
+            "url": "https://www.esic.gov.in/about-esic/regional-offices",
+            "address": "ESI Regional Office, Ayanavaram, Chennai - 600023",
+            "phone": "044-26214586"
+          },
+          "dl": {
+            "name": "ESIC Regional Office - Delhi",
+            "url": "https://www.esic.gov.in/about-esic/regional-offices",
+            "address": "ESI Regional Office, Jhandewalan Extension, New Delhi - 110055",
+            "phone": "011-23684688"
+          },
+          "hr": {
+            "name": "ESIC Regional Office - Haryana",
+            "url": "https://www.esic.gov.in/about-esic/regional-offices",
+            "address": "ESI Hospital Campus, Sector 9, Faridabad, Haryana - 121006",
+            "phone": "0129-2277507"
+          }
+        }
+      },
+      "voter_id": {
+        "nvsp_info_examples": [
+          "https://voters.eci.gov.in/",
+          "https://voters.eci.gov.in/home/how-it-works"
+        ],
+        "timeline_key": "voter_address_change",
+        "urn_pattern_key": "generic_portal_ref"
+      },
+      "driving_licence": {
+        "parivahan_home": "https://parivahan.gov.in",
+        "dl_services_faq": "https://parivahan.gov.in/en/faq/services-on-driver-license",
+        "timeline_key": "dl_address_change",
+        "urn_pattern_key": "generic_portal_ref"
+      }
+    }
+  }
+}

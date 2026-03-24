@@ -15,9 +15,9 @@ Core Design Philosophy
    Engineering decision: Model the system around life events, not flat to-do lists.
    Why:
    Tasks only make sense when they are grounded in context.
-   A "Prepare documents" task is meaningless unless the system understands why the documents are needed.
+   A "Prepare documents" or "Create study plan" task is meaningless unless the system understands the underlying life event.
    Result:
-   All workflows, deadlines, and reminders are scoped under a life event that can last days, months, or years.
+   All workflows, deadlines, and reminders are scoped under a life event that can last days, months, or years. Spanning 10 Universal Domains (Housing, Work, Education, Health, Family, Money, Legal, Parenting, Loss, Personal Growth) to handle both administrative cases and planning-based goals.
 
 2. Progressive Clarification over Perfect Input
    Engineering decision: Accept vague input and clarify gradually instead of forcing structured forms upfront.
@@ -46,8 +46,8 @@ Core Design Philosophy
 
 Pathfinder AI assists users by:
 
-- understanding the context of a life event
-- identifying commonly required documents and steps
+- understanding the context of a life event (whether administrative or planning-based)
+- identifying commonly required resources, tools, workflows, and documents
 - suggesting what to do next based on time and progress
 - providing gentle, time-aware guidance without removing user control
 
@@ -71,11 +71,11 @@ AI & NLP:
 - NumPy — Performs cosine similarity calculations over embedding vectors for in-database retrieval without an external vector store.
 
 Retrieval-Augmented Generation (RAG):
-(RAG ensures the AI gives correct documents for the right country by looking them up from trusted data. Web scraping is avoided because it is unreliable, legally risky, and difficult to maintain)
+(RAG ensures the AI gives correct resources, workflows, and documents by looking them up from trusted data. Web scraping is avoided because it is unreliable, legally risky, and difficult to maintain)
 
-- Curated Knowledge Base (Database-backed) — 29 hand-curated requirement entries stored in SQLite, each embedded as a 3072-dim vector for semantic search.
+- Curated Knowledge Base (Database-backed) — 101 hand-curated requirement and workflow entries stored in SQLite, each embedded as a 3072-dim vector for semantic search. This handles both rigorous paper-heavy events (e.g. Visas) and abstract planning events (e.g. Study Timetables).
 - Embedding-based Retrieval — Query text is embedded with gemini-embedding-001; cosine similarity is computed in-process using NumPy to find the top-k most relevant knowledge chunks.
-- Grounded Workflow Generation — Gemini generates task proposals using ONLY retrieved knowledge chunks; hallucination is prevented by strict system prompts.
+- Grounded Workflow Generation — Gemini generates task proposals using ONLY retrieved knowledge chunks; hallucination is prevented by strict system prompts. Fallback Universal Domain templates guarantee users never hit a dead-end.
 - User-Controlled Approval — Generated workflows are proposals only. The user explicitly approves before any tasks are persisted to the database (POST /life-events/approve-workflow).
 
 Time & Background Processing:

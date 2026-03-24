@@ -7,9 +7,11 @@ from backend.models.task_model import TaskStatus
 class TaskCreate(BaseModel):
     title: str
     description: Optional[str] = None
+    phase_title: Optional[str] = None
     # Integer 1 (lowest urgency) – 5 (highest urgency), default 3
     priority: int = 3
     due_date: Optional[datetime] = None
+    scheduled_date: Optional[datetime] = None
     life_event_id: int
     parent_id: Optional[int] = None
     reminder_opt_out: bool = False
@@ -19,18 +21,29 @@ class TaskResponse(BaseModel):
     id: int
     title: str
     description: Optional[str]
+    phase_title: Optional[str] = None
     status: TaskStatus
     priority: int
     due_date: Optional[datetime]
+    scheduled_date: Optional[datetime] = None
     reminder_opt_out: bool
     completed_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
     life_event_id: int
     parent_id: Optional[int] = None
+    subtasks: List["TaskResponse"] = []
 
     # Computed at query time — not stored in DB
     urgency_score: Optional[float] = None
+    task_type: Optional[str] = None
+    required_docs: List[dict] = []
+    has_scheduling_conflict: bool = False
+
+    # Cost Estimation
+    estimated_cost_min: Optional[int] = None
+    estimated_cost_max: Optional[int] = None
+    cost_currency: Optional[str] = "INR"
 
     class Config:
         from_attributes = True
@@ -45,6 +58,7 @@ class TaskUpdate(BaseModel):
     """Used by PATCH /tasks/{id} to update details."""
     priority: Optional[int] = None
     due_date: Optional[datetime] = None
+    scheduled_date: Optional[datetime] = None
     reminder_opt_out: Optional[bool] = None
 
 
@@ -61,4 +75,19 @@ class GroupedTasksResponse(BaseModel):
     """
     groups: List[TaskGroup]
     total: int
+
+class ConflictResolutionRequest(BaseModel):
+    """Request schema for resolving a scheduling conflict."""
+    resolution: str  # 'reschedule_others', 'reschedule_current', or 'accept_conflict'
+    scheduled_date: datetime
+
+
+class TaskUpdateResponse(BaseModel):
+    """Response schema for PATCH /tasks/{id}."""
+    task: TaskResponse
+    has_conflict: bool = False
+    conflicting_tasks: List[dict] = []
+
+
+TaskResponse.model_rebuild()
 

@@ -5,7 +5,7 @@ These models are pure data contracts; they never touch the database.
 """
 
 import enum
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -36,10 +36,11 @@ class LifeEventType(str, enum.Enum):
     HOME_PURCHASE = "HOME_PURCHASE"
     BUSINESS_STARTUP = "BUSINESS_STARTUP"
     WOMEN_ENTREPRENEURSHIP = "WOMEN_ENTREPRENEURSHIP"
-    NRI_RETURN_TO_INDIA = "NRI_RETURN_TO_INDIA"
+    REPATRIATION = "REPATRIATION"
     MEDICAL_EMERGENCY = "MEDICAL_EMERGENCY"
     VISA_APPLICATION = "VISA_APPLICATION"
     EDUCATIONAL_ENROLLMENT = "EDUCATIONAL_ENROLLMENT"
+    NRI_RETURN_TO_INDIA = "NRI_RETURN_TO_INDIA"
 
     # Tier 3
     WELLNESS_MANAGEMENT = "WELLNESS_MANAGEMENT"
@@ -51,6 +52,32 @@ class LifeEventType(str, enum.Enum):
     FAMILY_RELOCATION = "FAMILY_RELOCATION"
     INTERNATIONAL_TRAVEL = "INTERNATIONAL_TRAVEL"
     ADOPTION_PROCESS = "ADOPTION_PROCESS"
+    ACADEMIC_PLANNING = "ACADEMIC_PLANNING"
+    EVENT_PLANNING = "EVENT_PLANNING"
+
+    # Tier 4: Universal Domains (For generic Fallback & Broad Categorization)
+    HOUSING_AND_LOCATION = "HOUSING_AND_LOCATION"
+    WORK_AND_CAREER = "WORK_AND_CAREER"
+    EDUCATION_AND_LEARNING = "EDUCATION_AND_LEARNING"
+    HEALTH_AND_DISABILITY = "HEALTH_AND_DISABILITY"
+    FAMILY_AND_RELATIONSHIPS = "FAMILY_AND_RELATIONSHIPS"
+    MONEY_AND_ASSETS = "MONEY_AND_ASSETS"
+    LEGAL_AND_IDENTITY = "LEGAL_AND_IDENTITY"
+    PARENTING_AND_CAREGIVING = "PARENTING_AND_CAREGIVING"
+    LOSS_AND_CRISIS = "LOSS_AND_CRISIS"
+    PERSONAL_GROWTH = "PERSONAL_GROWTH"
+
+    # New High-Impact Categories
+    HOME_PURCHASE_PROCESS = "HOME_PURCHASE_PROCESS"
+    STUDY_ABROAD = "STUDY_ABROAD"
+    GRADUATE_STUDIES = "GRADUATE_STUDIES"
+    PET_ADOPTION = "PET_ADOPTION"
+    VOLUNTEER_WORK = "VOLUNTEER_WORK"
+    ESTATE_PLANNING = "ESTATE_PLANNING"
+    PARENTAL_LEAVE = "PARENTAL_LEAVE"
+    GRIEF_SUPPORT = "GRIEF_SUPPORT"
+    TRAVEL_RELOCATION = "TRAVEL_RELOCATION"
+    FREELANCE_SETUP = "FREELANCE_SETUP"
 
     # Catch-all
     OTHER = "OTHER"
@@ -68,7 +95,11 @@ class LifeEventAnalyzeRequest(BaseModel):
         min_length=10,
         max_length=4000,
         description="Free-form user text describing their life situation.",
-        examples=["I'm planning to buy a second-hand car next month in Bengaluru."],
+        examples=["I'm planning to buy a second-hand car next month in London."],
+    )
+    skip_clarification: bool = Field(
+        False,
+        description="If true, bypasses further clarification questions."
     )
 
 
@@ -87,6 +118,10 @@ class LifeEventClassification(BaseModel):
         min_length=1,
         description="One or more life-event labels that apply to the user's text.",
     )
+    display_title: str = Field(
+        ...,
+        description="A short, descriptive, human-friendly title for this event (e.g. 'Relocating to London' or 'Buying a used Toyota').",
+    )
     location: Optional[str] = Field(
         None,
         description="City, state, or country mentioned or implied in the text.",
@@ -97,6 +132,10 @@ class LifeEventClassification(BaseModel):
             "Time-frame extracted from the text, e.g. 'next month', "
             "'Q3 2026', 'within 6 months'."
         ),
+    )
+    enriched_narrative: str = Field(
+        ...,
+        description="A complete, professional, and descriptive sentence or paragraph that synthesizes the user's input and any answers to clarifications into a well-formed life situation overview. This will be stored as the formal description of the journey.",
     )
     confidence: float = Field(
         ...,
@@ -125,20 +164,26 @@ class LifeEventAnalyzeResponse(BaseModel):
 
     success: bool
     message: str
-    data: LifeEventClassification
+    data: Any
 
     @classmethod
     def from_classification(
-        cls, classification: LifeEventClassification
+        cls, classification: LifeEventClassification | dict
     ) -> "LifeEventAnalyzeResponse":
-        """Build the response envelope, flagging low-confidence results."""
-        if classification.confidence < _LOW_CONFIDENCE_THRESHOLD:
-            message = (
-                f"Classification completed with low confidence "
-                f"({classification.confidence:.0%}). "
-                "Please provide more context for a better result."
+        """Build the response envelope, flagging low-confidence results or returning clarification questions."""
+        # Handle dictionary case (Clarification or emergency fallback)
+        if isinstance(classification, dict):
+            is_clarification = classification.get("clarification_needed", False)
+            return cls(
+                success=True, 
+                message="Low confidence clarification needed" if is_clarification else "Analysis found (fallback mode)", 
+                data=classification
             )
+             
+        # Handle Pydantic model case
+        if classification.confidence < _LOW_CONFIDENCE_THRESHOLD:
+            message = "Low confidence classification — user may clarify details."
         else:
-            message = "Life event classified successfully."
+            message = "Life event classified based on your description."
 
         return cls(success=True, message=message, data=classification)

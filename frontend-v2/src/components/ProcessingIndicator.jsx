@@ -6,9 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Asterisk, CheckCircle2 } from 'lucide-react'
 
 const STEPS = [
-  { id: 'analyzing',    label: 'Understanding your situation...',    done: 'Situation analyzed' },
-  { id: 'loading-docs', label: 'Consulting knowledge core...',         done: 'Documentation retrieved' },
-  { id: 'generating',  label: 'Mapping optimal route...',          done: 'Route map drawn' },
+  { id: 'analyzing',    label: 'Understanding your situation...',    done: 'Situation understood' },
+  { id: 'loading-docs', label: 'Searching for information...',       done: 'Information found' },
+  { id: 'generating',  label: 'Creating your plan...',               done: 'Final plan ready' },
 ]
 
 const STAGE_INDEX = {
@@ -50,9 +50,9 @@ export default function ProcessingIndicator({ stage }) {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-            <Asterisk size={16} color="var(--lavender)" style={{ animation: 'breathe 3s ease-in-out infinite' }} />
-            <p className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--lavender)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>
-              AI Synthesis Active
+            <Asterisk size={16} color="var(--emerald)" style={{ animation: 'breathe 3s ease-in-out infinite' }} />
+            <p className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--emerald)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>
+              Assistant is working
             </p>
          </div>
 
@@ -73,7 +73,7 @@ export default function ProcessingIndicator({ stage }) {
                         {isDone
                            ? <CheckCircle2 size={13} color="var(--sage)" />
                            : isActive
-                              ? <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--lavender)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                              ? <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--emerald)', animation: 'pulse 1.5s ease-in-out infinite' }} />
                               : <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--muted)' }} />
                         }
                      </div>
@@ -95,3 +95,4 @@ export default function ProcessingIndicator({ stage }) {
     </motion.div>
   )
 }
+

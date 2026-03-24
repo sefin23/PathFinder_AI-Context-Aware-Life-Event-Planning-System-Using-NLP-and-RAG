@@ -15,7 +15,7 @@ const cardStyle = {
   transition: 'all var(--duration-base) var(--ease-spring)',
 }
 
-const SectionLabel = ({ icon: Icon, label, color = 'var(--lavender)' }) => (
+const SectionLabel = ({ icon: Icon, label, color = 'var(--emerald)' }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
     <div style={{ width: 28, height: 28, borderRadius: 8, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Icon size={14} color={color} />
@@ -43,12 +43,12 @@ const TodayUpcomingCard = ({ workflowData }) => {
       whileHover={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', transform: 'translateY(-2px)' }}
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }}
     >
-      <SectionLabel icon={Lightbulb} label="Focus Horizon" color="var(--lavender)" />
+      <SectionLabel icon={Lightbulb} label="Focus Horizon" color="var(--emerald)" />
       
       {todayTasks.length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <span className="font-mono" style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Immediate</span>
-          <div style={{ marginTop: 8, background: 'rgba(123,111,160,0.1)', padding: '12px 14px', borderRadius: 'var(--r-sm)', borderLeft: '3px solid var(--lavender)' }}>
+          <div style={{ marginTop: 8, background: 'rgba(123,111,160,0.1)', padding: '12px 14px', borderRadius: 'var(--r-sm)', borderLeft: '3px solid var(--emerald)' }}>
             <span style={{ fontSize: 13, fontWeight: 500, color: 'white', lineHeight: 1.4, display: 'block' }}>{todayTasks[0].title}</span>
           </div>
         </div>
@@ -89,7 +89,11 @@ const RiskStatsCard = ({ workflowData }) => {
         <span className="font-mono" style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Critical Path</span>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 8, background: 'rgba(216,110,110,0.1)', padding: '12px', borderRadius: 'var(--r-sm)' }}>
           <span style={{ fontSize: 14 }}>⚠️</span>
-          <span style={{ fontSize: 12.5, color: 'var(--coral)', lineHeight: 1.5 }}>Notifying utility companies of your exact move-out date is highly recommended.</span>
+          <span style={{ fontSize: 12.5, color: 'var(--coral)', lineHeight: 1.5 }}>
+            {analysisData?.life_event_types?.includes('RELOCATION') 
+              ? 'Notifying utility companies of your exact move-out date is highly recommended.'
+              : `Focusing on ${workflowData.tasks[0]?.title || 'primary objectives'} is critical to maintaining the timeline.`}
+          </span>
         </div>
       </div>
 
@@ -98,7 +102,7 @@ const RiskStatsCard = ({ workflowData }) => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
           <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--r-sm)', padding: '14px 10px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div className="font-playfair" style={{ fontSize: 24, fontWeight: 700, color: 'white' }}>0<span style={{ fontSize: 14, color: 'var(--muted)', fontWeight: 500 }}>/{taskCount}</span></div>
-            <div className="font-mono" style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4 }}>Nodes</div>
+            <div className="font-mono" style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4 }}>Steps</div>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--r-sm)', padding: '14px 10px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div className="font-playfair" style={{ fontSize: 24, fontWeight: 700, color: 'white' }}>--</div>
@@ -198,7 +202,7 @@ const TimelineCard = ({ workflowData }) => {
       whileHover={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', transform: 'translateY(-2px)' }}
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
     >
-      <SectionLabel icon={Map} label="Trajectory" color="var(--sage)" />
+      <SectionLabel icon={Map} label="Plan" color="var(--sage)" />
       
       <div style={{ paddingLeft: 12, borderLeft: '1px solid rgba(255,255,255,0.1)', marginLeft: 10, marginTop: 20 }}>
         <div style={{ position: 'relative', marginBottom: 24 }}>
@@ -264,16 +268,14 @@ export default function InsightPanel({ stage, analysisData, requirementsData, wo
         zIndex: 20
       }}
     >
-      <p className="font-mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 24 }}>
-        Command Center
-      </p>
+
 
       {/* Idle placeholder */}
       {stage === 'idle' && (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }}>
           <Brain size={32} color="var(--muted)" style={{ margin: '0 auto 16px', opacity: 0.3 }} />
           <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, fontStyle: 'italic' }}>
-            Awaiting input sequence...
+            Ready for your journey...
           </p>
         </div>
       )}
@@ -308,7 +310,7 @@ export default function InsightPanel({ stage, analysisData, requirementsData, wo
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderRadius: 'var(--r-md)', background: 'rgba(92,140,117,0.1)', border: '1px solid rgba(92,140,117,0.3)' }}
             >
               <CheckCircle2 size={16} color="var(--sage)" />
-              <span className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--sage)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sequence Approved</span>
+              <span className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--sage)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Plan Approved</span>
             </motion.div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -324,7 +326,7 @@ export default function InsightPanel({ stage, analysisData, requirementsData, wo
               >
                 {approving
                   ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> PROCESSING...</>
-                  : <><CheckCircle2 size={14} /> AUTHORIZE SEQUENCE</>
+                  : <><CheckCircle2 size={14} /> APPROVE PLAN</>
                 }
               </button>
               <button
@@ -347,7 +349,7 @@ export default function InsightPanel({ stage, analysisData, requirementsData, wo
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '16px', borderRadius: 'var(--r-md)', background: 'rgba(216,110,110,0.1)', border: '1px solid rgba(216,110,110,0.2)' }}>
           <p style={{ fontSize: 13, color: 'var(--coral)', marginBottom: 14, lineHeight: 1.5 }}>{errorMsg}</p>
           <button onClick={onRetry} className="btn-cust" style={{ width: '100%', background: 'var(--coral)', color: 'white', border: 'none' }}>
-            INITIATE RECOVERY
+            START RECOVERY
           </button>
         </motion.div>
       )}
@@ -359,3 +361,4 @@ export default function InsightPanel({ stage, analysisData, requirementsData, wo
     </div>
   )
 }
+

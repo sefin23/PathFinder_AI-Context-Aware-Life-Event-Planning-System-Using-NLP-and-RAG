@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<label for="dummy-input" style="display:none">Form Label</label>
+<input id="dummy-input" style="display:none" />
+<title>PathFinder — Guided Task Intelligence</title>
+<meta name="description" content="A premium walkthrough of PathFinder's Guided Task Intelligence feature, helping users navigate complex government portals with ease.">
+<meta property="og:title" content="PathFinder — Guided Task Intelligence">
+<meta property="og:description" content="Interactive demo of our mission-critical guidance system.">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fd:#0d1a15;--fm:#1a2f26;--fc:#1e3529;--fc2:#243d30;
+  --sage:#5c8c75;--fog:#b8cfc7;--amber:#d47c3f;--al:#f0a96b;
+  --coral:#c65d4a;--lav:#7b6fa0;--gold:#c9a84c;
+  --on:rgba(255,255,255,.9);--mu:rgba(255,255,255,.38);--bd:rgba(255,255,255,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--fd);color:var(--on);min-height:100vh}
+
+/* ── NAV ── */
+.nav{background:rgba(10,22,16,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;height:52px;padding:0 28px;gap:0;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:'Playfair Display',serif;font-weight:800;font-size:15px;color:white;
+  display:flex;align-items:center;gap:8px;margin-right:20px;flex-shrink:0}
+.nav-dot{width:12px;height:12px;border-radius:50%;background:var(--amber);padding:16px;box-sizing:content-box;background-clip:content-box;cursor:pointer}
+.ntab{padding:0 16px;height:52px;display:flex;align-items:center;font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--mu);border-bottom:2px solid transparent;cursor:pointer;
+  transition:all .2s;border-top:none;border-left:none;border-right:none;background:none;white-space:nowrap}
+.ntab:hover{color:rgba(255,255,255,.7)}
+.ntab.act{color:white;border-bottom-color:var(--amber)}
+
+/* ── PAGES ── */
+.page{display:none;padding:44px 48px;max-width:1080px}
+.page.show{display:block}
+
+/* ── TYPE ── */
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;
+  letter-spacing:.2em;color:var(--sage);margin-bottom:8px}
+h1{font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(26px,3.5vw,38px);
+  color:white;line-height:1.05;margin-bottom:10px}
+h1 em{color:var(--al);font-style:italic}
+.desc{font-size:14px;color:var(--mu);max-width:560px;line-height:1.6;font-weight:300;margin-bottom:28px}
+h2{font-family:'Playfair Display',serif;font-weight:700;font-size:20px;color:white;margin-bottom:6px}
+
+/* ── LAYOUT ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px}
+hr.div{border:none;border-top:1px solid var(--bd);margin:40px 0}
+
+/* ── CARDS ── */
+.card{background:var(--fc);border:1px solid var(--bd);border-radius:14px;padding:20px}
+.card2{background:var(--fc2);border:1px solid var(--bd);border-radius:10px;padding:14px}
+
+/* ── CHIPS ── */
+.chip{display:inline-flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:9px;
+  padding:3px 10px;border-radius:999px;border:1px solid;margin:2px}
+.chip.sage{background:rgba(92,140,117,.1);border-color:rgba(92,140,117,.3);color:var(--sage)}
+.chip.amber{background:rgba(212,124,63,.1);border-color:rgba(212,124,63,.3);color:var(--al)}
+.chip.lav{background:rgba(123,111,160,.1);border-color:rgba(123,111,160,.3);color:#b0a8d0}
+.chip.coral{background:rgba(198,93,74,.1);border-color:rgba(198,93,74,.3);color:#e88070}
+.chip.muted{background:rgba(255,255,255,.04);border-color:var(--bd);color:var(--mu)}
+
+/* ── INFO BOXES ── */
+.ibox{border-radius:10px;padding:12px 16px;font-size:12px;line-height:1.75;margin-bottom:16px}
+.ibox.sage{background:rgba(92,140,117,.07);border:1px solid rgba(92,140,117,.2);color:var(--fog)}
+.ibox.amber{background:rgba(212,124,63,.07);border:1px solid rgba(212,124,63,.2);border-left:3px solid var(--amber);color:var(--fog)}
+.ibox strong{color:white}
+
+/* ─────────────────────────────────────────────
+   DEMO: THE GUIDED TASK CARD
+───────────────────────────────────────────── */
+
+/* Task card wrapper */
+.task-card{background:var(--fc);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:12px;transition:border-color .2s}
+.task-card:hover{border-color:rgba(255,255,255,.14)}
+
+/* Header row */
+.tc-head{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer}
+.tc-cb{width:22px;height:22px;border:2px solid var(--sage);border-radius:6px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:all .25s cubic-bezier(.34,1.56,.64,1);
+  padding:11px;box-sizing:content-box;background-clip:content-box}
+.tc-cb.done{background:var(--sage);border-color:var(--sage)}
+.tc-cb.done::after{content:'✓';color:white;font-size:12px;font-weight:700}
+.tc-title{flex:1;font-size:13px;font-weight:500;color:white}
+.tc-badge{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 6px;border-radius:3px}
+.tc-arrow{font-size:10px;color:var(--mu);transition:transform .2s}
+.task-card.open .tc-arrow{transform:rotate(180deg)}
+
+/* Body */
+.tc-body{display:none;padding:0 16px 16px;border-top:1px solid var(--bd)}
+.task-card.open .tc-body{display:block}
+
+/* Two CTAs */
+.tc-cta-row{display:flex;gap:8px;margin-top:14px}
+.tc-btn-guide{flex:1;padding:10px 14px;background:linear-gradient(135deg,rgba(212,124,63,.15),rgba(13,26,21,.3));
+  border:1px solid rgba(212,124,63,.28);border-radius:10px;
+  font-size:12px;color:var(--al);cursor:pointer;transition:all .2s;
+  font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px}
+.tc-btn-guide:hover{background:linear-gradient(135deg,rgba(212,124,63,.22),rgba(13,26,21,.4));transform:translateY(-1px)}
+.tc-btn-done{flex:0 0 auto;padding:10px 16px;background:transparent;border:1px solid var(--bd);
+  border-radius:10px;font-size:12px;color:var(--mu);cursor:pointer;transition:all .2s;
+  font-family:'DM Sans',sans-serif}
+.tc-btn-done:hover{border-color:rgba(255,255,255,.2);color:white}
+
+/* Required docs inside task */
+.tc-docs{display:flex;flex-direction:column;gap:5px;margin-top:12px;margin-bottom:2px}
+.tc-doc{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;
+  border:1px solid var(--bd);background:rgba(255,255,255,.03);transition:all .2s}
+.tc-doc.has{border-color:rgba(92,140,117,.3);background:rgba(92,140,117,.05)}
+.tc-doc.need{border-color:rgba(212,124,63,.25);background:rgba(212,124,63,.04)}
+.tc-doc-icon{font-size:13px}
+.tc-doc-name{flex:1;font-size:11px;color:rgba(255,255,255,.75)}
+.tc-vault-tag{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 6px;
+  border-radius:999px;background:rgba(92,140,117,.12);border:1px solid rgba(92,140,117,.25);color:var(--sage)}
+.tc-upload{font-size:10px;padding:3px 10px;background:var(--amber);color:white;border:none;
+  border-radius:999px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.tc-upload:hover{transform:scale(1.05)}
+
+/* ─────────────────────────────────────────────
+   DEMO: GUIDE ME PANEL (slide-up)
+───────────────────────────────────────────── */
+.guide-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  z-index:200;display:none;align-items:flex-end;justify-content:center}
+.guide-overlay.open{display:flex}
+.guide-sheet{background:var(--fc);border:1px solid var(--bd);border-radius:20px 20px 0 0;
+  width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:0;
+  animation:slideUp .35s cubic-bezier(.34,1.56,.64,1)}
+
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
+.gs-handle{width:40px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:12px auto 0}
+.gs-header{padding:18px 22px 14px;border-bottom:1px solid var(--bd)}
+.gs-tag{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;
+  letter-spacing:.15em;color:var(--amber);margin-bottom:5px}
+.gs-title{font-family:'Playfair Display',serif;font-weight:700;font-size:17px;color:white;margin-bottom:3px}
+.gs-meta{font-size:11px;color:var(--mu);display:flex;align-items:center;gap:10px}
+.gs-time{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;
+  background:rgba(92,140,117,.12);border:1px solid rgba(92,140,117,.25);border-radius:999px;color:var(--sage)}
+
+/* Prefill banner */
+.gs-prefill{background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(13,26,21,.3));
+  border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:12px 16px;
+  margin:14px 22px;display:flex;gap:10px;align-items:flex-start}
+.gs-pf-ic{font-size:18px;flex-shrink:0}
+.gs-pf-title{font-size:12px;font-weight:500;color:white;margin-bottom:3px}
+.gs-pf-body{font-size:11px;color:var(--mu);line-height:1.6}
+.gs-pf-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.gs-pf-tag{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 7px;
+  border-radius:3px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.25);color:var(--gold)}
+
+/* Steps */
+.gs-steps{padding:0 22px 8px}
+.gs-step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--bd);cursor:pointer}
+.gs-step:last-child{border-bottom:none}
+.gs-step:hover .gs-step-body{opacity:.85}
+.gs-step-num{width:28px;height:28px;border-radius:50%;flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:white}
+.gs-step-num.done{background:var(--sage)}
+.gs-step-num.active{background:var(--amber)}
+.gs-step-num.todo{background:rgba(255,255,255,.1);color:var(--mu)}
+.gs-step-body{flex:1}
+.gs-step-title{font-size:13px;font-weight:500;color:white;margin-bottom:4px}
+.gs-step-desc{font-size:11px;color:var(--mu);line-height:1.65;margin-bottom:6px}
+
+/* Step action button */
+.gs-step-action{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;
+  border-radius:999px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s}
+.gs-step-action.link{background:rgba(92,140,117,.12);border:1px solid rgba(92,140,117,.25);color:var(--sage)}
+.gs-step-action.link:hover{background:rgba(92,140,117,.2)}
+.gs-step-action.copy{background:rgba(212,124,63,.12);border:1px solid rgba(212,124,63,.25);color:var(--al)}
+.gs-step-action.copy:hover{background:rgba(212,124,63,.2)}
+
+/* Prefilled field display */
+.gs-field-row{display:flex;align-items:center;gap:8px;padding:6px 10px;
+  background:rgba(255,255,255,.04);border-radius:7px;border:1px solid var(--bd);margin-bottom:4px}
+.gs-field-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--mu);width:80px;flex-shrink:0}
+.gs-field-val{font-size:11px;color:white;flex:1}
+.gs-field-src{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 6px;
+  border-radius:3px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold)}
+
+/* What you'll get */
+.gs-result{background:rgba(92,140,117,.07);border:1px solid rgba(92,140,117,.18);
+  border-radius:10px;padding:12px 16px;margin:12px 22px 0}
+.gs-result-title{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--sage);margin-bottom:6px}
+.gs-result-items{display:flex;flex-direction:column;gap:4px}
+.gs-result-item{font-size:11px;color:var(--mu);display:flex;align-items:center;gap:7px}
+.gs-result-item::before{content:'→';color:var(--sage);flex-shrink:0}
+
+/* Bottom CTA */
+.gs-cta{padding:16px 22px}
+.gs-cta-btn{width:100%;padding:12px;background:var(--amber);color:white;border:none;
+  border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:500;font-size:14px;
+  cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);display:flex;
+  align-items:center;justify-content:center;gap:7px}
+.gs-cta-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(212,124,63,.4)}
+.gs-close{position:absolute;top:16px;right:16px;background:none;border:none;
+  color:var(--mu);font-size:18px;cursor:pointer;padding:4px 8px}
+
+/* ─────────────────────────────────────────────
+   DEMO: VAULT INTELLIGENCE — document reading
+───────────────────────────────────────────── */
+.vault-intel{background:var(--fc);border:1px solid rgba(201,168,76,.25);border-radius:14px;
+  padding:20px;margin-bottom:16px}
+.vi-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.vi-ic{font-size:24px;flex-shrink:0}
+.vi-title{font-family:'Playfair Display',serif;font-weight:700;font-size:15px;color:white;margin-bottom:3px}
+.vi-sub{font-size:12px;color:var(--mu);line-height:1.6}
+.vi-rows{display:flex;flex-direction:column;gap:8px}
+.vi-row{background:var(--fc2);border:1px solid var(--bd);border-radius:9px;padding:12px 14px;
+  display:flex;align-items:flex-start;gap:10px}
+.vi-row-ic{font-size:16px;flex-shrink:0;margin-top:1px}
+.vi-row-title{font-size:12px;font-weight:500;color:white;margin-bottom:3px}
+.vi-row-body{font-size:11px;color:var(--mu);line-height:1.65}
+.vi-row-action{font-size:10px;padding:3px 9px;border-radius:999px;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all .2s;margin-top:6px;display:inline-flex;align-items:center;gap:4px}
+.vi-row-action.sage{background:rgba(92,140,117,.12);border:1px solid rgba(92,140,117,.25);color:var(--sage)}
+.vi-row-action.amber{background:rgba(212,124,63,.12);border:1px solid rgba(212,124,63,.25);color:var(--al)}
+.vi-row-action:hover{opacity:.8;transform:scale(1.03)}
+
+/* ── CODE BLOCKS ── */
+.codeblock{background:#06100c;border:1px solid rgba(92,140,117,.15);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.cb-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.cb-lang{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:var(--mu)}
+.cb-file{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sage)}
+pre{font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.75;color:rgba(255,255,255,.72);padding:16px;overflow-x:auto;white-space:pre}
+.kw{color:#7b6fa0}.fn{color:#5c8c75}.st{color:#c9a84c}.cm{color:rgba(255,255,255,.25);font-style:italic}.ty{color:#f0a96b}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fi{opacity:0;animation:fadeUp .45s ease forwards}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <div class="nav-logo"><div class="nav-dot"></div>PathFinder</div>
+  <button class="ntab act" onclick="showPage('concept',this)">💡 Concept</button>
+  <button class="ntab" onclick="showPage('demo',this)">▶ Live demo</button>
+  <button class="ntab" onclick="showPage('vault-intel',this)">🧠 Vault intelligence</button>
+  <button class="ntab" onclick="showPage('code',this)">⚙️ Build spec</button>
+</nav>
+
+<!-- ════════════════════ CONCEPT ════════════════════ -->
+<div class="page show" id="pg-concept">
+  <div class="eyebrow">New feature — Guided Task Completion</div>
+  <h1>Not a to-do list.<br><em>A navigator.</em></h1>
+  <p class="desc">A GPS doesn't just show you the destination. It talks you through every turn. PathFinder shouldn't just list tasks — it should walk users through completing each one, right now, inside the app.</p>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px">
+    <span class="chip sage">Reduces search time ~60%</span>
+    <span class="chip amber">V1 — no API needed</span>
+    <span class="chip muted">Builds on vault intelligence</span>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div style="font-size:20px;margin-bottom:10px">🔍</div>
+      <h2>The problem right now</h2>
+      <p style="font-size:13px;color:var(--mu);line-height:1.7;margin-top:4px">User sees "Download e-Aadhaar." They open Google, search for UIDAI, click wrong link, get confused, abandon. 15 minutes wasted on a 2-minute task. PathFinder knows the exact URL. It's sitting on data it's not using.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:20px;margin-bottom:10px">🗺</div>
+      <h2>What PathFinder should do</h2>
+      <p style="font-size:13px;color:var(--mu);line-height:1.7;margin-top:4px">Open the right page. Show what to click. Pre-fill what it already knows (your Aadhaar number from your profile, your name from your vault). Tell you exactly what to download. That's the difference between a list and a navigator.</p>
+    </div>
+  </div>
+
+  <div class="ibox amber"><strong>The one-liner:</strong> "Google tells you that you need an Aadhaar update. PathFinder opens the right page, shows you what to click, fills in what it knows, and tells you exactly what to download when you're done."</div>
+
+  <hr class="div">
+
+  <h2 style="margin-bottom:16px">Every task gets two modes</h2>
+
+  <div class="g2">
+    <div class="card" style="border-left:3px solid var(--amber)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--al);margin-bottom:8px">🗺 Guide me →</div>
+      <p style="font-size:13px;color:var(--mu);line-height:1.7">PathFinder walks the user through completing this task right now. Step-by-step, inside the app. Shows the exact URL, what to click, pre-fills known details, tells them what to download. User never has to search. For users who don't know where to start.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--sage)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--sage);margin-bottom:8px">✓ Mark done</div>
+      <p style="font-size:13px;color:var(--mu);line-height:1.7">For tasks the user already completed, or prefers to handle themselves. One tap, task checked off. No friction, no required flow. For experienced users or tasks they handle regularly.</p>
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <h2 style="margin-bottom:8px">V1 — what's realistic without APIs</h2>
+  <p style="font-size:13px;color:var(--mu);line-height:1.7;margin-bottom:20px">Every task gets a structured guide built once in the database. No government API access needed, no browser automation. Just well-researched, accurate guidance. This alone cuts cognitive load by ~60%.</p>
+
+  <div class="g3">
+    <div class="card2">
+      <div style="color:var(--sage);font-size:13px;font-weight:500;margin-bottom:6px">1. Exact URL</div>
+      <div style="font-size:11px;color:var(--mu)">Not "visit UIDAI website." The specific deep-link to the exact page. Researched once, maintained in a task_guides DB table.</div>
+    </div>
+    <div class="card2">
+      <div style="color:var(--amber);font-size:13px;font-weight:500;margin-bottom:6px">2. 3-step visual guide</div>
+      <div style="font-size:11px;color:var(--mu)">Screenshots of exactly what to click. Stored as annotated images. User sees it before they even open the page.</div>
+    </div>
+    <div class="card2">
+      <div style="color:var(--lav);font-size:13px;font-weight:500;margin-bottom:6px">3. Pre-filled details</div>
+      <div style="font-size:11px;color:var(--mu)">Name, DOB, address from vault documents. Shown alongside the form so user just copies — doesn't have to remember.</div>
+    </div>
+    <div class="card2">
+      <div style="color:var(--gold);font-size:13px;font-weight:500;margin-bottom:6px">4. Expected result</div>
+      <div style="font-size:11px;color:var(--mu)">"You'll receive an SMS within 2 hours. The PDF will have a QR code in the top right." User knows what success looks like.</div>
+    </div>
+    <div class="card2">
+      <div style="color:var(--coral);font-size:13px;font-weight:500;margin-bottom:6px">5. What to save</div>
+      <div style="font-size:11px;color:var(--mu)">"Save this PDF. Rename it 'Aadhaar_2026.pdf'. You'll need it in Step 7 of this plan." Eliminates the "where did I save that" problem.</div>
+    </div>
+    <div class="card2">
+      <div style="color:var(--mu);font-size:13px;font-weight:500;margin-bottom:6px">V2+ (harder)</div>
+      <div style="font-size:11px;color:var(--mu)">In-app browser with overlays, form auto-fill via browser extension, actual form submission. Needs official API or RPA. Phase 3.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ DEMO ════════════════════ -->
+<div class="page" id="pg-demo">
+  <div class="eyebrow">Live demo — interactive</div>
+  <h2 style="font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(26px,3.5vw,38px);color:white;line-height:1.05;margin-bottom:10px">Guided task <em>demo</em></h2>
+  <p class="desc">Expand any task. Click "Guide me" to see the full step-by-step panel. This is what every task in PathFinder will have.</p>
+
+  <!-- Task cards -->
+  <div style="max-width:680px">
+    <!-- TASK 1 — Documents (has vault docs) -->
+    <div class="task-card fi" style="animation-delay:.05s">
+      <div class="tc-head" onclick="toggleTask(this)">
+        <div class="tc-cb done"></div>
+        <span class="tc-title">Collect Aadhaar + PAN Card</span>
+        <span class="tc-badge" style="background:#c65d4a22;color:#e88070">CRITICAL</span>
+        <span class="tc-arrow">▾</span>
+      </div>
+      <div class="tc-body">
+        <div style="font-size:11px;color:var(--mu);margin-top:10px;margin-bottom:8px">Required documents:</div>
+        <div class="tc-docs">
+          <div class="tc-doc has">
+            <span class="tc-doc-icon">📄</span>
+            <span class="tc-doc-name">Aadhaar Card</span>
+            <span class="tc-vault-tag">from vault</span>
+          </div>
+          <div class="tc-doc has">
+            <span class="tc-doc-icon">📄</span>
+            <span class="tc-doc-name">PAN Card</span>
+            <span class="tc-vault-tag">from vault</span>
+          </div>
+        </div>
+        <div class="tc-cta-row">
+          <button class="tc-btn-guide" onclick="openGuide('aadhaar')">🗺 Guide me through this →</button>
+          <button class="tc-btn-done">✓ Mark done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASK 2 — Missing docs -->
+    <div class="task-card fi" style="animation-delay:.1s">
+      <div class="tc-head" onclick="toggleTask(this)">
+        <div class="tc-cb"></div>
+        <span class="tc-title">Submit documents to HR</span>
+        <span class="tc-badge" style="background:#d47c3f22;color:#f0a96b">HIGH</span>
+        <span class="tc-arrow">▾</span>
+      </div>
+      <div class="tc-body">
+        <div style="font-size:11px;color:var(--mu);margin-top:10px;margin-bottom:8px">Required for this task:</div>
+        <div class="tc-docs">
+          <div class="tc-doc has">
+            <span class="tc-doc-icon">📄</span>
+            <span class="tc-doc-name">Aadhaar Card</span>
+            <span class="tc-vault-tag">from vault</span>
+          </div>
+          <div class="tc-doc need">
+            <span class="tc-doc-icon">⬜</span>
+            <span class="tc-doc-name">Offer Letter</span>
+            <button class="tc-upload">+ Upload</button>
+          </div>
+          <div class="tc-doc need">
+            <span class="tc-doc-icon">⬜</span>
+            <span class="tc-doc-name">Relieving Letter</span>
+            <button class="tc-upload">+ Upload</button>
+          </div>
+        </div>
+        <div class="tc-cta-row">
+          <button class="tc-btn-guide" onclick="openGuide('hr')">🗺 Guide me through this →</button>
+          <button class="tc-btn-done">✓ Mark done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASK 3 — Bank account -->
+    <div class="task-card fi" style="animation-delay:.15s">
+      <div class="tc-head" onclick="toggleTask(this)">
+        <div class="tc-cb"></div>
+        <span class="tc-title">Open salary bank account</span>
+        <span class="tc-badge" style="background:#5c8c7522;color:#5c8c75">MED</span>
+        <span class="tc-arrow">▾</span>
+      </div>
+      <div class="tc-body">
+        <div style="font-size:12px;color:var(--mu);margin-top:10px;margin-bottom:4px;line-height:1.6">PathFinder knows your employer is <strong style="color:white">Infosys</strong> and your joining city is <strong style="color:white">Bangalore</strong>. It can recommend the right banks automatically.</div>
+        <div class="tc-cta-row">
+          <button class="tc-btn-guide" onclick="openGuide('bank')">🗺 Guide me through this →</button>
+          <button class="tc-btn-done">✓ Mark done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ VAULT INTELLIGENCE ════════════════════ -->
+<div class="page" id="pg-vault-intel">
+  <div class="eyebrow">Vault intelligence — document reading</div>
+  <h2 style="font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(26px,3.5vw,38px);color:white;line-height:1.05;margin-bottom:10px">The vault reads <em>your docs</em></h2>
+  <p class="desc">The vault isn't just storage. When you upload an offer letter or Aadhaar, PathFinder reads it and uses what it learns across your entire plan. This is the real differentiator.</p>
+
+  <div class="ibox sage"><strong>Key insight:</strong> The value isn't storage. Storage is Google Drive. The value is that PathFinder reads the document, understands what it means for your specific plan, and acts on it automatically.</div>
+
+  <!-- Upload trigger -->
+  <div class="vault-intel">
+    <div class="vi-header">
+      <div class="vi-ic">📑</div>
+      <div>
+        <div class="vi-title">You uploaded your Offer Letter</div>
+        <div class="vi-sub">Offer_Letter_Infosys_Bangalore.pdf — PathFinder read it and found 4 things to do automatically</div>
+      </div>
+    </div>
+    <div class="vi-rows">
+      <div class="vi-row">
+        <div class="vi-row-ic">📅</div>
+        <div>
+          <div class="vi-row-title">Joining date set — April 1, 2026</div>
+          <div class="vi-row-body">All 34 task deadlines have been calculated backwards from this date. Your plan now has real due dates, not just "Day 1, Day 2."</div>
+          <button class="vi-row-action sage">✓ Applied to plan</button>
+        </div>
+      </div>
+      <div class="vi-row">
+        <div class="vi-row-ic">🏙</div>
+        <div>
+          <div class="vi-row-title">Office location — Bangalore, Koramangala</div>
+          <div class="vi-row-body">Bank recommendations have been updated to branches near your office. Housing search suggestions now focus on 3–5km radius.</div>
+          <button class="vi-row-action sage">✓ Applied to plan</button>
+        </div>
+      </div>
+      <div class="vi-row">
+        <div class="vi-row-ic">⚠️</div>
+        <div>
+          <div class="vi-row-title">Employer-specific BGV note</div>
+          <div class="vi-row-body">Infosys typically requires 3 years of employment history + academic transcripts. Generic plans don't include this — yours now does.</div>
+          <button class="vi-row-action amber">View updated tasks →</button>
+        </div>
+      </div>
+      <div class="vi-row">
+        <div class="vi-row-ic">🪪</div>
+        <div>
+          <div class="vi-row-title">Address mismatch detected</div>
+          <div class="vi-row-body">Your Aadhaar address shows Mumbai. Your offer letter shows Bangalore posting. You'll need to update your Aadhaar address — PathFinder has flagged this as a priority task.</div>
+          <button class="vi-row-action amber">See Aadhaar update task →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="vault-intel" style="margin-top:20px">
+    <div class="vi-header">
+      <div class="vi-ic">🪪</div>
+      <div>
+        <div class="vi-title">You uploaded your Aadhaar Card</div>
+        <div class="vi-sub">PathFinder extracted your details and applied them across your plan</div>
+      </div>
+    </div>
+    <div class="vi-rows">
+      <div class="vi-row">
+        <div class="vi-row-ic">✏️</div>
+        <div>
+          <div class="vi-row-title">Pre-filled your profile</div>
+          <div class="vi-row-body">Name, DOB, current address and Aadhaar number extracted. Now pre-filled in every task that requires them — you'll never have to type your Aadhaar number again.</div>
+          <button class="vi-row-action sage">✓ Profile updated</button>
+        </div>
+      </div>
+      <div class="vi-row">
+        <div class="vi-row-ic">🕐</div>
+        <div>
+          <div class="vi-row-title">Passport validity check</div>
+          <div class="vi-row-body">Your passport expires in 8 months. Some employers require 1 year validity. PathFinder flagged this as a risk. Your passport task has been moved to Week 1.</div>
+          <button class="vi-row-action amber">Review passport task →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ BUILD SPEC ════════════════════ -->
+<div class="page" id="pg-code">
+  <div class="eyebrow">For Antigravity — build spec</div>
+  <h2 style="font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(26px,3.5vw,38px);color:white;line-height:1.05;margin-bottom:10px">How to <em>build it</em></h2>
+
+  <h2 style="margin-bottom:8px">Database: task_guides table</h2>
+  <p style="font-size:13px;color:var(--mu);line-height:1.7;margin-bottom:16px">One row per task type. Content is curated once by the team, not AI-generated. The AI just picks the right guide for each task in a plan.</p>
+
+  <div class="codeblock">
+    <div class="cb-head"><span class="cb-lang">SQL</span><span class="cb-file">task_guides.sql</span></div>
+    <pre><span class="kw">CREATE TABLE</span> task_guides (
+  id              <span class="ty">UUID</span>         <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  task_type       <span class="ty">VARCHAR(100)</span> <span class="kw">NOT NULL UNIQUE</span>,  <span class="cm">-- e.g. "download_aadhaar"</span>
+  title           <span class="ty">VARCHAR(255)</span> <span class="kw">NOT NULL</span>,
+  estimated_mins  <span class="ty">INTEGER</span>,                         <span class="cm">-- "~5 minutes"</span>
+  url             <span class="ty">TEXT</span>,                             <span class="cm">-- exact deep-link</span>
+  steps           <span class="ty">JSONB</span>        <span class="kw">NOT NULL</span>,           <span class="cm">-- array of step objects</span>
+  prefill_fields  <span class="ty">JSONB</span>,                           <span class="cm">-- which user fields to show</span>
+  expected_result <span class="ty">TEXT</span>,                             <span class="cm">-- "you'll receive an SMS..."</span>
+  what_to_save    <span class="ty">TEXT</span>,                             <span class="cm">-- "save as PDF, rename..."</span>
+  tags            <span class="ty">TEXT[]</span>,                           <span class="cm">-- ["identity", "aadhaar"]</span>
+  updated_at      <span class="ty">TIMESTAMP</span>    <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- steps JSONB structure:</span>
+<span class="cm">-- [{</span>
+<span class="cm">--   "num": 1,</span>
+<span class="cm">--   "title": "Go to the UIDAI Aadhaar download page",</span>
+<span class="cm">--   "description": "This is the official government page...",</span>
+<span class="cm">--   "action": { "type": "open_url", "url": "https://myaadhaar.uidai.gov.in/", "label": "Open UIDAI page" },</span>
+<span class="cm">--   "screenshot_url": "https://assets.pathfinder.app/guides/aadhaar_step1.png"</span>
+<span class="cm">-- }]</span>
+
+<span class="cm">-- prefill_fields JSONB structure:</span>
+<span class="cm">-- [{ "label": "Aadhaar number", "source": "profile.aadhaar_number" },</span>
+<span class="cm">--  { "label": "Full name",      "source": "profile.full_name" }]</span></pre>
+  </div>
+
+  <div class="codeblock">
+    <div class="cb-head"><span class="cb-lang">Python</span><span class="cb-file">api/guides.py</span></div>
+    <pre><span class="kw">@router</span>.get(<span class="st">'/tasks/{task_id}/guide'</span>)
+<span class="kw">async def</span> <span class="fn">get_task_guide</span>(task_id: str, user=Depends(get_current_user)):
+    <span class="cm">"""
+    Returns the guide for a specific task, with prefilled values
+    from the user's vault and profile.
+    """</span>
+    task = db.get_task(task_id)
+    guide = db.get_guide_by_type(task.task_type)
+
+    <span class="kw">if not</span> guide:
+        <span class="kw">return</span> {<span class="st">'has_guide'</span>: <span class="kw">False</span>}
+
+    <span class="cm"># Resolve prefill values from user profile + vault</span>
+    prefilled = []
+    <span class="kw">for</span> field <span class="kw">in</span> (guide.prefill_fields or []):
+        value = resolve_field(field[<span class="st">'source'</span>], user)
+        prefilled.append({
+            <span class="st">'label'</span>: field[<span class="st">'label'</span>],
+            <span class="st">'value'</span>: value,
+            <span class="st">'source_label'</span>: get_source_label(field[<span class="st">'source'</span>])
+        })
+
+    <span class="kw">return</span> {
+        <span class="st">'has_guide'</span>: <span class="kw">True</span>,
+        <span class="st">'title'</span>: guide.title,
+        <span class="st">'estimated_mins'</span>: guide.estimated_mins,
+        <span class="st">'url'</span>: guide.url,
+        <span class="st">'steps'</span>: guide.steps,
+        <span class="st">'prefilled'</span>: prefilled,
+        <span class="st">'expected_result'</span>: guide.expected_result,
+        <span class="st">'what_to_save'</span>: guide.what_to_save
+    }
+
+
+<span class="kw">def</span> <span class="fn">resolve_field</span>(source: str, user) -> str:
+    <span class="cm">"""Resolve a dotted field path from user profile or vault."""</span>
+    parts = source.split(<span class="st">'.'</span>)
+    <span class="kw">if</span> parts[0] == <span class="st">'profile'</span>:
+        <span class="kw">return</span> getattr(user.profile, parts[1], <span class="kw">None</span>)
+    <span class="kw">elif</span> parts[0] == <span class="st">'vault'</span>:
+        doc = user.get_vault_doc_by_type(parts[1])
+        <span class="kw">return</span> doc.extracted_fields.get(parts[2]) <span class="kw">if</span> doc <span class="kw">else None</span>
+    <span class="kw">return None</span></pre>
+  </div>
+
+  <h2 style="margin-bottom:8px;margin-top:28px">Vault document reading</h2>
+  <p style="font-size:13px;color:var(--mu);line-height:1.7;margin-bottom:16px">When a user uploads a document, extract structured data from it using a PDF extraction + LLM pipeline. Store the extracted fields so they can be used everywhere.</p>
+
+  <div class="codeblock">
+    <div class="cb-head"><span class="cb-lang">Python</span><span class="cb-file">vault/reader.py — document intelligence</span></div>
+    <pre><span class="kw">async def</span> <span class="fn">process_vault_upload</span>(doc_id: str, file_path: str, doc_type: str):
+    <span class="cm">"""
+    Called after every vault upload. Extract structured data,
+    update user profile, trigger plan updates.
+    """</span>
+    <span class="cm"># 1. Extract text from PDF</span>
+    text = extract_pdf_text(file_path)
+
+    <span class="cm"># 2. Ask Claude to extract structured fields</span>
+    PROMPTS = {
+        <span class="st">'offer_letter'</span>: <span class="st">"""Extract from this offer letter:
+            - joining_date (ISO format)
+            - company_name
+            - office_city
+            - role_title
+            - employer_specific_requirements (list any docs mentioned)
+            Return as JSON."""</span>,
+        <span class="st">'aadhaar'</span>: <span class="st">"""Extract from this Aadhaar:
+            - full_name
+            - dob (ISO format)
+            - aadhaar_number (last 4 digits only for security)
+            - address_city
+            Return as JSON."""</span>,
+    }
+
+    prompt = PROMPTS.get(doc_type)
+    <span class="kw">if not</span> prompt:
+        <span class="kw">return</span>
+
+    extracted = await call_claude(prompt + <span class="st">"\n\n"</span> + text[:3000])
+
+    <span class="cm"># 3. Store extracted fields on the vault document</span>
+    db.update_vault_doc(doc_id, {<span class="st">'extracted_fields'</span>: extracted})
+
+    <span class="cm"># 4. Apply to user profile if relevant</span>
+    <span class="kw">if</span> doc_type == <span class="st">'aadhaar'</span>:
+        db.update_profile(user_id, {
+            <span class="st">'full_name'</span>: extracted.get(<span class="st">'full_name'</span>),
+            <span class="st">'dob'</span>: extracted.get(<span class="st">'dob'</span>),
+        })
+
+    <span class="cm"># 5. Trigger plan updates if offer letter</span>
+    <span class="kw">if</span> doc_type == <span class="st">'offer_letter'</span>:
+        await update_plan_from_offer_letter(user_id, extracted)
+
+    <span class="cm"># 6. Run mismatch checks</span>
+    await run_mismatch_checks(user_id, doc_type, extracted)</pre>
+  </div>
+
+  <div class="g2" style="margin-top:24px">
+    <div class="card2">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sage);margin-bottom:6px">Frontend components needed</div>
+      <div style="font-size:12px;color:white;margin-bottom:3px">GuidePanel.jsx</div>
+      <div style="font-size:11px;color:var(--mu)">Bottom sheet with steps, prefilled fields, URL action buttons. One component, used from both entry points.</div>
+    </div>
+    <div class="card2">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--sage);margin-bottom:6px">Where it lives</div>
+      <div style="font-size:12px;color:white;margin-bottom:3px">On every task card</div>
+      <div style="font-size:11px;color:var(--mu)">Not a new page. A panel that slides up from any task card that has a guide. Same as simulation panel pattern — already built once.</div>
+    </div>
+  </div>
+
+  <div class="ibox amber" style="margin-top:8px"><strong>Content is the bottleneck, not code.</strong> The guide component takes 2 days to build. Populating the task_guides table with accurate, researched content for every task type takes weeks. Start with the 10 most common tasks (Aadhaar download, PAN card, BGV docs, bank account, address update). That alone covers 80% of what users struggle with.</div>
+</div>
+
+<!-- ════════════════════ GUIDE SHEET OVERLAY ════════════════════ -->
+<div class="guide-overlay" id="guideOverlay" onclick="closeGuide(event)">
+  <div class="guide-sheet" id="guideSheet">
+    <div class="gs-handle"></div>
+    <button class="gs-close" onclick="closeGuideBtn()">✕</button>
+    <div id="guideContent"></div>
+  </div>
+</div>
+
+<script>
+// ── PAGE ROUTING ──
+function showPage(id, tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+  document.querySelectorAll('.ntab').forEach(t => t.classList.remove('act'));
+  document.getElementById('pg-' + id).classList.add('show');
+  tab.classList.add('act');
+}
+
+// ── TASK TOGGLES ──
+function toggleTask(head) {
+  head.parentElement.classList.toggle('open');
+}
+
+// ── GUIDE DATA ──
+const GUIDES = {
+  aadhaar: {
+    tag: 'Guide me through this',
+    title: 'Download your e-Aadhaar',
+    meta: '~5 minutes · uidai.gov.in',
+    time: '~5 min',
+    prefill: [
+      { label: 'Aadhaar number', value: 'XXXX XXXX 4821', src: 'from vault' },
+      { label: 'Registered mobile', value: '+91 98XXX XXXXX', src: 'from profile' },
+      { label: 'Full name', value: 'Sefin K R', src: 'from vault' },
+    ],
+    steps: [
+      { num: 1, status: 'done', title: 'Go to the official UIDAI page', desc: 'Open myaadhaar.uidai.gov.in — make sure it\'s the .gov.in domain. Don\'t use any third-party sites.',
+        action: { type: 'link', label: 'Open UIDAI page →', url: 'https://myaadhaar.uidai.gov.in/' } },
+      { num: 2, status: 'active', title: 'Enter your Aadhaar number', desc: 'Enter the 12-digit number below. Your Aadhaar number from your vault is shown above — just copy it in.',
+        action: { type: 'copy', label: 'Copy number', value: '1234 5678 4821' } },
+      { num: 3, status: 'todo', title: 'Enter the OTP sent to your phone', desc: 'An SMS will arrive on your registered mobile. Enter the 6-digit code. If you don\'t receive it within 2 minutes, click "Resend OTP".', action: null },
+      { num: 4, status: 'todo', title: 'Download the PDF and enter the password', desc: 'Click "Download Aadhaar". The PDF is password-protected. Password = first 4 letters of your name (uppercase) + birth year. For Sefin born 1995: SEFI1995',
+        action: { type: 'copy', label: 'Copy password hint', value: 'First 4 letters name (CAPS) + birth year' } },
+    ],
+    result: 'A PDF named "eaadhaar.pdf" will download. It opens with your password. You\'ll see your photo, Aadhaar number, and address.',
+    save: 'Rename it "Aadhaar_2026.pdf" and save to your Documents folder. You\'ll need this in Steps 3, 7, and 12 of this plan.'
+  },
+  hr: {
+    tag: 'Guide me through this',
+    title: 'Submit documents to HR',
+    meta: '~20 minutes · Email + HR portal',
+    time: '~20 min',
+    prefill: [
+      { label: 'HR email', value: 'hr.onboarding@infosys.com', src: 'from plan' },
+      { label: 'Employee ID', value: 'Provided at joining', src: '—' },
+      { label: 'Joining date', value: 'April 1, 2026', src: 'from offer letter' },
+    ],
+    steps: [
+      { num: 1, status: 'done', title: 'Collect all required documents', desc: '3 of 5 documents are in your vault. You still need to upload your Offer Letter and Relieving Letter above.', action: null },
+      { num: 2, status: 'active', title: 'Open the Infosys onboarding portal', desc: 'Infosys uses InfyMe for document submission. You\'ll get the login link and credentials on your offer letter email.',
+        action: { type: 'link', label: 'Open InfyMe portal →', url: 'https://infyme.infosys.com/' } },
+      { num: 3, status: 'todo', title: 'Upload each document to the correct category', desc: 'Identity: Aadhaar + PAN. Education: Degree + Marksheets. Employment: Offer letter + Relieving letter. Each file must be under 2MB.', action: null },
+      { num: 4, status: 'todo', title: 'Submit and note the reference number', desc: 'After submitting, you\'ll get a reference number by email. Save it — HR may need it if there\'s a query.',
+        action: { type: 'copy', label: 'Note ref number when received', value: '' } },
+    ],
+    result: 'HR will confirm document receipt within 1–2 business days. BGV (background verification) will start automatically.',
+    save: 'Screenshot the submission confirmation page. Save the reference number. HR may contact you if any document is unclear or missing.'
+  },
+  bank: {
+    tag: 'Guide me through this',
+    title: 'Open your salary bank account',
+    meta: '~30 minutes · In-person or online',
+    time: '~30 min',
+    prefill: [
+      { label: 'Employer', value: 'Infosys Limited', src: 'from offer letter' },
+      { label: 'Office location', value: 'Koramangala, Bangalore', src: 'from offer letter' },
+      { label: 'Suggested banks', value: 'HDFC, Kotak, ICICI', src: 'Infosys tie-ups' },
+    ],
+    steps: [
+      { num: 1, status: 'done', title: 'Choose your bank', desc: 'Infosys has salary account tie-ups with HDFC, Kotak, and ICICI. HDFC is most commonly used. All offer zero-balance salary accounts.',
+        action: { type: 'link', label: 'HDFC Salary Account →', url: 'https://www.hdfc.bank.in/salary-account' } },
+      { num: 2, status: 'active', title: 'Book an appointment or apply online', desc: 'HDFC lets you apply online with a pre-filled form. Nearest branch to Koramangala: HDFC Koramangala (0.8km from Infosys campus).',
+        action: { type: 'link', label: 'Find nearest HDFC branch →', url: 'https://www.hdfc.bank.in/branch-locator' } },
+      { num: 3, status: 'todo', title: 'Bring documents to the branch', desc: 'Required: Aadhaar (original + copy), PAN (original + copy), Offer Letter (copy), 2 passport-size photos. All in your vault.', action: null },
+      { num: 4, status: 'todo', title: 'Get your account number and link Aadhaar', desc: 'Account opens same day. Link your Aadhaar for DBT transfers. Download the HDFC mobile app and set up UPI immediately.', action: null },
+    ],
+    result: 'You\'ll receive your account number same day. Net banking credentials arrive by post within 5 working days. UPI works immediately via the mobile app.',
+    save: 'Note your account number and IFSC code. Share the account number with HR payroll immediately so your first salary goes to the right account.'
+  }
+};
+
+// ── OPEN GUIDE ──
+function openGuide(type) {
+  const g = GUIDES[type];
+  if (!g) return;
+
+  const prefillHtml = g.prefill.map(f => `
+    <div class="gs-field-row">
+      <span class="gs-field-lbl">${f.label}</span>
+      <span class="gs-field-val">${f.value}</span>
+      <span class="gs-field-src">${f.src}</span>
+    </div>`).join('');
+
+  const stepsHtml = g.steps.map((s, i) => {
+    const actionBtn = s.action ? (
+      s.action.type === 'link'
+        ? `<button class="gs-step-action link" onclick="window.open('${s.action.url}','_blank')">${s.action.label}</button>`
+        : `<button class="gs-step-action copy" onclick="alert('Copied: ${s.action.value}')">${s.action.label}</button>`
+    ) : '';
+    return `
+      <div class="gs-step" onclick="">
+        <div class="gs-step-num ${s.status}">${s.status === 'done' ? '✓' : s.num}</div>
+        <div class="gs-step-body">
+          <div class="gs-step-title">${s.title}</div>
+          <div class="gs-step-desc">${s.desc}</div>
+          ${actionBtn}
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('guideContent').innerHTML = `
+    <div class="gs-header">
+      <div class="gs-tag">${g.tag}</div>
+      <div class="gs-title">${g.title}</div>
+      <div class="gs-meta">${g.meta} <span class="gs-time">${g.time}</span></div>
+    </div>
+    <div class="gs-prefill">
+      <div class="gs-pf-ic">✨</div>
+      <div>
+        <div class="gs-pf-title">PathFinder knows these — no need to look them up</div>
+        <div class="gs-pf-body">Details from your vault and profile, pre-filled for this task.</div>
+        <div style="margin-top:8px">${prefillHtml}</div>
+      </div>
+    </div>
+    <div class="gs-steps">${stepsHtml}</div>
+    <div class="gs-result">
+      <div class="gs-result-title">What you'll get when done</div>
+      <div class="gs-result-items">
+        <div class="gs-result-item">${g.result}</div>
+        <div class="gs-result-item">${g.save}</div>
+      </div>
+    </div>
+    <div class="gs-cta">
+      <button class="gs-cta-btn" onclick="closeGuideBtn()">✓ I completed this task</button>
+    </div>`;
+
+  document.getElementById('guideOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeGuide(e) {
+  if (e.target === document.getElementById('guideOverlay')) closeGuideBtn();
+}
+function closeGuideBtn() {
+  document.getElementById('guideOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+</script>
+</body>
+</html>

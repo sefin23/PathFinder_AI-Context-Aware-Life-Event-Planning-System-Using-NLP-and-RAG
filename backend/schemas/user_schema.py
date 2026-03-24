@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class UserCreate(BaseModel):
@@ -13,6 +14,7 @@ class UserResponse(BaseModel):
     name: str
     email: str
     timezone: str
+    extracted_profile: Optional[str] = None
 
     class Config:
         from_attributes = True

@@ -15,7 +15,7 @@
 - **Amber (CTAs/Active/Warnings):** `#D47C3F`
 - **Amber Light (Accents):** `#F0A96B`
 - **Coral (Errors/Overdue/High Priority):** `#C65D4A`
-- **Lavender (AI suggestions/Analytics):** `#7B6FA0`
+- **emerald (AI suggestions/Analytics):** `#7B6FA0`
 - **Gold (Completed milestones/Ceremony):** `#C9A84C`
 
 **Text Colors:**
@@ -70,13 +70,13 @@ Unlike standard dashboards, all pages share the dark forest background (`linear-
   - `HIGH`: Coral text & left-border, 20% coral background.
   - `MED`: Amber text & left-border, 20% amber background.
   - `LOW`: Sage text & left-border, 20% sage background.
-  - `AI-RANKED`: Lavender text & left-border, 20% lavender background.
+  - `AI-RANKED`: emerald text & left-border, 20% emerald background.
 - **AI Suggestion Badge:**
   - ✨ icon in the top-right corner.
-  - 2px Lavender left border for any AI-inferred task.
+  - 2px emerald left border for any AI-inferred task.
 - **Toast Notifications (Sonner equivalent):**
   - Stacked top-right, slide in from right (`300ms`).
-  - Left border colored by type: Sage (Success), Coral (Error), Amber (Warning), Lavender (AI Info).
+  - Left border colored by type: Sage (Success), Coral (Error), Amber (Warning), emerald (AI Info).
 
 ## 5. View-Specific Designs
 
@@ -99,7 +99,7 @@ Unlike standard dashboards, all pages share the dark forest background (`linear-
 
 - Analytics dashboard. Number counts animate from 0 up to their value (odometer effect).
 - Bar charts grow from the bottom up on intersection load (`IntersectionObserver`).
-- Lavender is the primary color used for highlighting insights and bottleneck metadata.
+- emerald is the primary color used for highlighting insights and bottleneck metadata.
 
 ## 6. Motion & Micro-interactions
 
@@ -115,3 +115,4 @@ Unlike standard dashboards, all pages share the dark forest background (`linear-
 ---
 
 _Generated based on Dark Forest structural UI direction. Use these rules and token references when translating into CSS/Tailwind utility classes later._
+
