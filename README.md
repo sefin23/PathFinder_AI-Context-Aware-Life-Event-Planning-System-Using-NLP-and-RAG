@@ -7,9 +7,7 @@
 
 ---
 
-A user is facing a life situation but doesn't know where to start. They type _"I'm finishing college and moving to a new city for my first job"_ and upload their offer letter. PathFinder AI understands the situation, breaks it into steps like documentation, accommodation, banking, and onboarding — with suggested timelines. As tasks are completed or circumstances change, the system updates the plan and shows what needs attention next, helping the user move forward without feeling overwhelmed.
-
-PathFinder AI is a life-event oriented planning assistant built using a Retrieval-Augmented Generation (RAG) approach, where AI understanding is grounded in a structured knowledge base to generate explainable, user-controlled workflows for managing tasks, documents, and timelines across long-running life situations.
+Most life situations don't come with instructions. You type _"I'm finishing college and moving to a new city for my first job"_ — PathFinder AI reads the situation, asks a few smart questions if needed, and builds a personalised step-by-step plan covering documentation, accommodation, banking, and onboarding. Upload your offer letter and it reads the joining date, company, and location automatically — pre-filling your requirements so you never enter the same detail twice. Each task comes with the exact official link you need and a guided walkthrough that knows which documents you've already uploaded. As your situation changes, the plan adapts with it.
 
 ## Key Features
 
