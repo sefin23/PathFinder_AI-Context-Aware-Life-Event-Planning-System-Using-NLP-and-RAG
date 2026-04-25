@@ -2,7 +2,7 @@
 
 This guide defines the visual language of the Pathfinder AI ecosystem. It serves as the "Source of Truth" for all branding and UI tokens.
 
-> [!TIP]
+> [!Note]
 > For detailed UI components, animations, and interaction logic, see the [**Design System Spec**](./DESIGN_SYSTEM.md).
 
 ## 🎨 Color Palette (The Dark Forest)
