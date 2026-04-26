@@ -30,6 +30,7 @@ Most life situations don't come with instructions. You type _"I'm finishing coll
 
 ## Documentation
 
+- [Brand Identity & Design System](docs/branding/BRAND_GUIDE.md) — the visual language, color palette, and 3D asset library
 - [Life Events Library & Use Cases](LIFE_EVENTS_LIBRARY.md) — the 10 life event domains covered, real-world use cases, and target audience breakdown
 - [Backend README](backend/README.md) — tech stack with reasoning, AI pipeline overview, and setup instructions
 - [Frontend README](frontend/README.md) — frontend tech stack with reasoning and folder structure
