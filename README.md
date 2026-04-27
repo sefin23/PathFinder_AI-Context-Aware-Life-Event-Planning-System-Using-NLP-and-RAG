@@ -30,6 +30,16 @@ Most life situations don't come with instructions. You type _"I'm finishing coll
 
 **AI Assists, Never Decides** — AI suggestions are always editable, optional, and labeled as recommendations. The user remains fully in control.
 
+## 🛡️ Why RAG over Web Scraping?
+
+A common question for a project like this is: *"Why not just scrape government portals in real-time?"* 
+
+PathFinder AI intentionally uses **Retrieval-Augmented Generation (RAG)** with a curated knowledge base instead of web scraping for four critical reasons:
+1.  **Reliability**: Government portals change their HTML structure frequently. Real-time scrapers are fragile and break often, whereas a curated RAG system provides stable, verified guidance.
+2.  **Maintenance**: Managing scrapers for dozens of different city, state, and national portals is a massive technical overhead.
+3.  **Legal & Ethical Safety**: Scraping government infrastructure can be legally complex and is often blocked by security systems. RAG allows us to provide the same value using "Source of Truth" data without intrusive bot behavior.
+4.  **Anti-Hallucination**: By grounding the AI in a specific, hand-curated knowledge base, we prevent the model from "making up" outdated or incorrect procedural steps found on random internet forums.
+
 ## Documentation
 
 - [Brand Identity & Design System](docs/branding/BRAND_GUIDE.md) — the visual language, color palette, and 3D asset library
