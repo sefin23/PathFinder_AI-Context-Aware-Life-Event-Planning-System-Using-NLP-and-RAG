@@ -24,7 +24,7 @@ Most life situations don't come with instructions. You type _"I'm finishing coll
 
 **Life-Event First, Not Task First** — tasks only make sense in context. A "Prepare documents" task is meaningless unless the system understands the underlying event. All workflows, deadlines, and reminders are scoped under a life event that can span days, months, or years.
 
-**Zero-Context-Switching Execution** — Most planning systems fail because they only tell you _what_ to do, but not _how_. PathFinder AI brings the execution to the user. By pre-filling personal details from the Vault and embedding official links directly into the guided walkthroughs, the user never has to leave the interface to find the right form or verify their own details. It reduces the "cognitive load" and "tab-hunting" that makes life transitions stressful.
+**Zero-Context-Switching Execution** — Most planning systems fail because they only tell you _what_ to do, but not _how_. PathFinder AI brings the execution to the user. By pre-filling personal details from the Vault and embedding official links directly into the guided walkthroughs, the user never has to leave the interface to find the right form or verify their own details. It reduces "decision fatigue", "cognitive load" and "tab-hunting" that makes life transitions stressful.
 
 **Progressive Clarification over Perfect Input** — users often cannot articulate all details at once, especially during stressful situations. The system accepts vague input and clarifies gradually instead of forcing structured forms upfront.
 
